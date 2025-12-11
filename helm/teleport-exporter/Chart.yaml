@@ -5,7 +5,7 @@ description: A Helm chart for teleport-exporter, which exposes Prometheus metric
 type: application
 home: https://github.com/giantswarm/teleport-exporter
 icon: https://s.giantswarm.io/app-icons/prometheus/1/light.svg
-version: 0.1.0
+version: 0.0.2
 annotations:
   application.giantswarm.io/team: "shield"
   config.giantswarm.io/version: 1.x.x
