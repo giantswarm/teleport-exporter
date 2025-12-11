@@ -36,12 +36,12 @@ import (
 
 func main() {
 	var (
-		metricsAddr      string
-		probeAddr        string
-		teleportAddr     string
-		identityFile     string
-		refreshInterval  time.Duration
-		insecure         bool
+		metricsAddr     string
+		probeAddr       string
+		teleportAddr    string
+		identityFile    string
+		refreshInterval time.Duration
+		insecure        bool
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
@@ -172,4 +172,3 @@ func readyHandler(client *teleport.Client) http.HandlerFunc {
 		}
 	}
 }
-
