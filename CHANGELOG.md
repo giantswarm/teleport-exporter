@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Grafana dashboard for visualizing Teleport metrics
+
+### Fixed
+
+- ServiceMonitor now includes `application.giantswarm.io/team` label required by Prometheus Operator
+
+## [0.0.1] - 2025-12-11
+
+### Added
+
 - Initial release of teleport-exporter
 - Prometheus metrics for Teleport resources:
   - `teleport_exporter_up` - Connection status
@@ -36,3 +46,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://github.com/giantswarm/teleport-exporter/compare/v0.0.2...HEAD
 [0.0.2]: https://github.com/giantswarm/teleport-exporter/releases/tag/v0.0.2
+[Unreleased]: https://github.com/giantswarm/teleport-exporter/compare/v0.0.1...HEAD
+[0.0.1]: https://github.com/giantswarm/teleport-exporter/releases/tag/v0.0.1
