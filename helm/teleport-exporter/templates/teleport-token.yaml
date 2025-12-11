@@ -11,8 +11,7 @@ spec:
   join_method: kubernetes
   bot_name: {{ include "resource.default.name" . }}
   kubernetes:
-    type: static_jwks
+    type: in_cluster
     allow:
       - service_account: "{{ include "resource.default.namespace" . }}:{{ include "resource.default.name" . }}-tbot"
 {{- end }}
-

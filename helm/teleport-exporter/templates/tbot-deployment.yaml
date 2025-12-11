@@ -75,6 +75,6 @@ spec:
               - serviceAccountToken:
                   path: join-sa-token
                   expirationSeconds: 600
-                  audience: {{ .Values.teleport.address }}
+                  audience: {{ .Values.teleport.address | replace ":443" "" | replace ":3080" "" | replace ":3025" "" }}
 {{- end }}
 

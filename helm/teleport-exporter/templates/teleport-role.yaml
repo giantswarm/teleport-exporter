@@ -1,5 +1,5 @@
 {{- if .Values.teleport.createResources }}
-apiVersion: resources.teleport.dev/v7
+apiVersion: resources.teleport.dev/v1
 kind: TeleportRoleV7
 metadata:
   name: {{ include "resource.default.name" . }}
