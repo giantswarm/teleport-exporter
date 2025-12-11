@@ -100,7 +100,8 @@ tbot:
   image:
     registry: gsoci.azurecr.io
     name: giantswarm/tbot-distroless
-    tag: "16.1.4"
+    # Use same major version as Teleport server for compatibility
+    tag: "18.2.4"
     pullPolicy: IfNotPresent
 
   resources:
