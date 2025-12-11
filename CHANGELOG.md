@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- changed: `app.giantswarm.io` label group was changed to `application.giantswarm.io`
+### Added
 
-[Unreleased]: https://github.com/giantswarm/{APP-NAME}/tree/main
+- Initial release of teleport-exporter
+- Prometheus metrics for Teleport resources:
+  - `teleport_exporter_up` - Connection status
+  - `teleport_exporter_cluster_info` - Cluster information
+  - `teleport_exporter_nodes_total` - Total SSH nodes count
+  - `teleport_exporter_node_info` - Detailed node information
+  - `teleport_exporter_kubernetes_clusters_total` - Total Kubernetes clusters count
+  - `teleport_exporter_kubernetes_cluster_info` - Detailed Kubernetes cluster information
+  - `teleport_exporter_databases_total` - Total databases count
+  - `teleport_exporter_database_info` - Detailed database information
+  - `teleport_exporter_apps_total` - Total applications count
+  - `teleport_exporter_app_info` - Detailed application information
+  - `teleport_exporter_collect_duration_seconds` - Collection duration
+- Helm chart with support for:
+  - Automatic Teleport resource creation via CRDs (TeleportRoleV7, TeleportBotV1, TeleportProvisionToken)
+  - tbot deployment for automatic identity renewal
+  - Manual identity configuration via existing secrets
+  - ServiceMonitor for Prometheus Operator
+  - NetworkPolicy for security
+  - VerticalPodAutoscaler support
+- Health and readiness probes
+- Configurable refresh interval for metrics collection
+
+[Unreleased]: https://github.com/giantswarm/teleport-exporter/tree/main
