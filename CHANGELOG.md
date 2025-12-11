@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Grafana dashboard for visualizing Teleport metrics
+
+### Fixed
+
+- ServiceMonitor now includes `application.giantswarm.io/team` label required by Prometheus Operator
+
 ## [0.0.1] - 2025-12-11
 
 ### Added
