@@ -1,0 +1,35 @@
+{{- if .Values.teleport.createResources }}
+apiVersion: resources.teleport.dev/v1
+kind: TeleportRoleV7
+metadata:
+  name: {{ include "resource.default.name" . }}
+  namespace: {{ include "resource.default.namespace" . }}
+  labels:
+    {{- include "labels.common" . | nindent 4 }}
+spec:
+  allow:
+    # Label-based access needed for listing resources via API
+    node_labels:
+      '*': '*'
+    kubernetes_labels:
+      '*': '*'
+    db_labels:
+      '*': '*'
+    app_labels:
+      '*': '*'
+    # RBAC rules for API access
+    rules:
+      - resources: [node]
+        verbs: [list, read]
+      - resources: [kube_server, kube_cluster]
+        verbs: [list, read]
+      - resources: [db_server, db]
+        verbs: [list, read]
+      - resources: [app_server, app]
+        verbs: [list, read]
+      - resources: [cluster_name]
+        verbs: [list, read]
+  options:
+    max_session_ttl: 12h
+{{- end }}
+

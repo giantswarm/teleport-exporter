@@ -1,0 +1,80 @@
+{{- if .Values.tbot.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "resource.default.name" . }}-tbot
+  namespace: {{ include "resource.default.namespace" . }}
+  labels:
+    {{- include "labels.common" . | nindent 4 }}
+    app.kubernetes.io/component: tbot
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "labels.selector" . | nindent 6 }}
+      app.kubernetes.io/component: tbot
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/tbot-configmap.yaml") . | sha256sum }}
+      labels:
+        {{- include "labels.common" . | nindent 8 }}
+        app.kubernetes.io/component: tbot
+    spec:
+      serviceAccountName: {{ include "resource.default.name" . }}-tbot
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: tbot
+          image: "{{ .Values.tbot.image.registry }}/{{ .Values.tbot.image.name }}:{{ .Values.tbot.image.tag }}"
+          imagePullPolicy: {{ .Values.tbot.image.pullPolicy | default "IfNotPresent" }}
+          command:
+            - tbot
+          args:
+            - start
+            - -c
+            - /config/tbot.yaml
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: KUBERNETES_TOKEN_PATH
+              value: /var/run/secrets/tokens/join-sa-token
+          ports:
+            - containerPort: 3100
+              protocol: TCP
+          resources:
+            {{- toYaml .Values.tbot.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+            - name: join-sa-token
+              mountPath: /var/run/secrets/tokens
+              readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "resource.default.name" . }}-tbot-config
+        - name: join-sa-token
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: join-sa-token
+                  expirationSeconds: 600
+                  audience: {{ .Values.teleport.address | replace ":443" "" | replace ":3080" "" | replace ":3025" "" }}
+{{- end }}
+

@@ -3,6 +3,9 @@ FROM golang:1.23.4 AS builder
 
 WORKDIR /workspace
 
+# Allow Go to download newer toolchain if needed
+ENV GOTOOLCHAIN=auto
+
 # Copy the Go Modules manifests
 COPY go.mod go.mod
 COPY go.sum go.sum
@@ -26,4 +29,3 @@ COPY --from=builder /workspace/teleport-exporter .
 USER 65532:65532
 
 ENTRYPOINT ["/teleport-exporter"]
-

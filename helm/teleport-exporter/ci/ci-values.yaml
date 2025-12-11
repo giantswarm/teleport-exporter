@@ -1,0 +1,6 @@
+# CI test values - provides required fields for chart testing
+teleport:
+  address: "teleport.example.com:443"
+
+identity:
+  existingSecret: "teleport-exporter-identity"

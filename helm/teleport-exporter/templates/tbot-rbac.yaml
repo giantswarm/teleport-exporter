@@ -1,0 +1,44 @@
+{{- if .Values.tbot.enabled }}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ include "resource.default.name" . }}-tbot
+  namespace: {{ include "resource.default.namespace" . }}
+  labels:
+    {{- include "labels.common" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "resource.default.name" . }}-tbot
+  namespace: {{ include "resource.default.namespace" . }}
+  labels:
+    {{- include "labels.common" . | nindent 4 }}
+rules:
+  # tbot needs to be able to create and manage the identity secret
+  - apiGroups: [""]
+    resources: ["secrets"]
+    verbs: ["create"]
+  - apiGroups: [""]
+    resources: ["secrets"]
+    resourceNames:
+      - {{ .Values.tbot.identitySecretName | default (printf "%s-identity" (include "resource.default.name" .)) }}
+    verbs: ["get", "update", "patch", "delete"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "resource.default.name" . }}-tbot
+  namespace: {{ include "resource.default.namespace" . }}
+  labels:
+    {{- include "labels.common" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "resource.default.name" . }}-tbot
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "resource.default.name" . }}-tbot
+    namespace: {{ include "resource.default.namespace" . }}
+{{- end }}
+
