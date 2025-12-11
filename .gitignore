@@ -1,6 +1,6 @@
 # Binaries
-teleport-exporter
-teleport-exporter-*
+/teleport-exporter
+/teleport-exporter-*
 *.exe
 
 # Build output

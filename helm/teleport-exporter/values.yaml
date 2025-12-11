@@ -1,0 +1,107 @@
+replicas: 1
+
+registry:
+  domain: gsoci.azurecr.io
+
+image:
+  name: "giantswarm/teleport-exporter"
+
+imagePullSecrets: []
+
+global:
+  podSecurityStandards:
+    enforced: true
+
+pod:
+  user:
+    id: 65532
+  group:
+    id: 65532
+
+nodeSelector: {}
+tolerations: []
+
+# Additional custom pod labels
+podLabels: {}
+
+# Pod securityContext
+podSecurityContext:
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container securityContext
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  privileged: false
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  seccompProfile:
+    type: RuntimeDefault
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 100m
+    memory: 128Mi
+
+# Teleport connection settings
+teleport:
+  # Address of the Teleport proxy or auth server (required)
+  # Example: teleport.example.com:443
+  address: ""
+  
+  # Path to the identity file inside the container
+  # This should be mounted from a secret or volume
+  identityFilePath: "/var/run/teleport/identity"
+  
+  # Skip TLS certificate verification (not recommended for production)
+  insecure: false
+
+# Exporter settings
+exporter:
+  # How often to refresh metrics from Teleport API
+  refreshInterval: 30s
+
+# Identity file secret configuration
+# The identity file should be generated using tbot or tctl
+identity:
+  # Name of an existing secret containing the identity file
+  # The secret should have a key named "identity" containing the identity file content
+  existingSecret: ""
+  
+  # If not using an existing secret, you can provide the identity file content directly
+  # WARNING: This is not recommended for production use
+  # content: ""
+
+monitoring:
+  serviceMonitor:
+    enabled: true
+    labels: {}
+    interval: ""
+    scrapeTimeout: ""
+    relabelings:
+      - action: labeldrop
+        regex: pod|service|container
+    metricRelabelings: []
+
+networkpolicy:
+  enabled: true
+
+podAnnotations: {}
+
+verticalPodAutoscaler:
+  enabled: false
+  containerPolicies:
+    minAllowed:
+      cpu: 25m
+      memory: 32Mi
+    maxAllowed:
+      cpu: 500m
+      memory: 512Mi
+
