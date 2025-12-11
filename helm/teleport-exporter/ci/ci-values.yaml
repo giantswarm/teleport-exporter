@@ -4,4 +4,3 @@ teleport:
 
 identity:
   existingSecret: "teleport-exporter-identity"
-

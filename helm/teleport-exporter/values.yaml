@@ -55,11 +55,11 @@ teleport:
   # Address of the Teleport proxy or auth server (required)
   # Example: teleport.example.com:443
   address: ""
-  
+
   # Path to the identity file inside the container
   # This should be mounted from a secret or volume
   identityFilePath: "/var/run/teleport/identity"
-  
+
   # Skip TLS certificate verification (not recommended for production)
   insecure: false
 
@@ -74,7 +74,7 @@ identity:
   # Name of an existing secret containing the identity file
   # The secret should have a key named "identity" containing the identity file content
   existingSecret: ""
-  
+
   # If not using an existing secret, you can provide the identity file content directly
   # WARNING: This is not recommended for production use
   # content: ""
@@ -104,4 +104,3 @@ verticalPodAutoscaler:
     maxAllowed:
       cpu: 500m
       memory: 512Mi
-
