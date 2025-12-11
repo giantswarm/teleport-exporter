@@ -5,6 +5,7 @@ registry:
 
 image:
   name: "giantswarm/teleport-exporter"
+  # tag: "" # Defaults to Chart.Version
 
 imagePullSecrets: []
 
@@ -63,6 +64,10 @@ teleport:
   # Skip TLS certificate verification (not recommended for production)
   insecure: false
 
+  # Create Teleport CRD resources (Role, Bot, ProvisionToken)
+  # Enable this when deploying in the Teleport cluster with CRDs installed
+  createResources: false
+
 # Exporter settings
 exporter:
   # How often to refresh metrics from Teleport API
@@ -73,11 +78,38 @@ exporter:
 identity:
   # Name of an existing secret containing the identity file
   # The secret should have a key named "identity" containing the identity file content
+  # If tbot.enabled is true and this is empty, it defaults to <release-name>-identity
   existingSecret: ""
 
-  # If not using an existing secret, you can provide the identity file content directly
-  # WARNING: This is not recommended for production use
-  # content: ""
+# tbot configuration for automatic identity management
+# When enabled, tbot runs as a separate deployment and manages the identity secret
+tbot:
+  # Enable tbot deployment for automatic identity renewal
+  enabled: false
+
+  # Name of the secret where tbot will store the identity
+  # Defaults to <release-name>-identity
+  identitySecretName: ""
+
+  # How often tbot renews the certificate
+  renewalInterval: "20m"
+
+  # Certificate TTL
+  certificateTTL: "24h"
+
+  image:
+    registry: gsoci.azurecr.io
+    name: giantswarm/tbot-distroless
+    tag: "16.1.4"
+    pullPolicy: IfNotPresent
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 256Mi
 
 monitoring:
   serviceMonitor:

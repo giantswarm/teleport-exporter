@@ -1,0 +1,18 @@
+{{- if .Values.teleport.createResources }}
+apiVersion: resources.teleport.dev/v2
+kind: TeleportProvisionToken
+metadata:
+  name: {{ include "resource.default.name" . }}
+  namespace: {{ include "resource.default.namespace" . }}
+  labels:
+    {{- include "labels.common" . | nindent 4 }}
+spec:
+  roles: [Bot]
+  join_method: kubernetes
+  bot_name: {{ include "resource.default.name" . }}
+  kubernetes:
+    type: static_jwks
+    allow:
+      - service_account: "{{ include "resource.default.namespace" . }}:{{ include "resource.default.name" . }}-tbot"
+{{- end }}
+

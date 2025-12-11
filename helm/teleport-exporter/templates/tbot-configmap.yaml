@@ -1,0 +1,29 @@
+{{- if .Values.tbot.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "resource.default.name" . }}-tbot-config
+  namespace: {{ include "resource.default.namespace" . }}
+  labels:
+    {{- include "labels.common" . | nindent 4 }}
+data:
+  tbot.yaml: |
+    version: v2
+    onboarding:
+      join_method: kubernetes
+      token: {{ include "resource.default.name" . }}
+    renewal_interval: {{ .Values.tbot.renewalInterval | default "20m" }}
+    certificate_ttl: {{ .Values.tbot.certificateTTL | default "24h" }}
+    storage:
+      type: memory
+    proxy_server: {{ required "teleport.address is required" .Values.teleport.address }}
+    outputs:
+      - type: identity
+        destination:
+          type: kubernetes_secret
+          name: {{ .Values.tbot.identitySecretName | default (printf "%s-identity" (include "resource.default.name" .)) }}
+          labels:
+            app.kubernetes.io/managed-by: tbot
+            app.kubernetes.io/name: {{ include "name" . }}
+{{- end }}
+

@@ -1,0 +1,13 @@
+{{- if .Values.teleport.createResources }}
+apiVersion: resources.teleport.dev/v1
+kind: TeleportBotV1
+metadata:
+  name: {{ include "resource.default.name" . }}
+  namespace: {{ include "resource.default.namespace" . }}
+  labels:
+    {{- include "labels.common" . | nindent 4 }}
+spec:
+  roles:
+    - {{ include "resource.default.name" . }}
+{{- end }}
+

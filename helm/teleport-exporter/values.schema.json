@@ -18,6 +18,9 @@
             "properties": {
                 "name": {
                     "type": "string"
+                },
+                "tag": {
+                    "type": "string"
                 }
             }
         },
@@ -157,6 +160,9 @@
                 },
                 "insecure": {
                     "type": "boolean"
+                },
+                "createResources": {
+                    "type": "boolean"
                 }
             },
             "required": ["address"]
@@ -174,6 +180,67 @@
             "properties": {
                 "existingSecret": {
                     "type": "string"
+                }
+            }
+        },
+        "tbot": {
+            "type": "object",
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                },
+                "identitySecretName": {
+                    "type": "string"
+                },
+                "renewalInterval": {
+                    "type": "string"
+                },
+                "certificateTTL": {
+                    "type": "string"
+                },
+                "image": {
+                    "type": "object",
+                    "properties": {
+                        "registry": {
+                            "type": "string"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "tag": {
+                            "type": "string"
+                        },
+                        "pullPolicy": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "resources": {
+                    "type": "object",
+                    "properties": {
+                        "requests": {
+                            "type": "object",
+                            "properties": {
+                                "cpu": {
+                                    "type": "string"
+                                },
+                                "memory": {
+                                    "type": "string"
+                                }
+                            }
+                        },
+                        "limits": {
+                            "type": "object",
+                            "properties": {
+                                "cpu": {
+                                    "type": "string"
+                                },
+                                "memory": {
+                                    "type": "string"
+                                }
+                            }
+                        }
+                    }
                 }
             }
         },
@@ -253,4 +320,3 @@
         }
     }
 }
-

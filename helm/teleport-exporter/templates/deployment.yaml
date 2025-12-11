@@ -1,3 +1,11 @@
+{{- $identitySecretName := "" }}
+{{- if .Values.identity.existingSecret }}
+{{- $identitySecretName = .Values.identity.existingSecret }}
+{{- else if .Values.tbot.enabled }}
+{{- $identitySecretName = .Values.tbot.identitySecretName | default (printf "%s-identity" (include "resource.default.name" .)) }}
+{{- else }}
+{{- fail "Either identity.existingSecret must be set or tbot.enabled must be true" }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -114,8 +122,7 @@ spec:
       volumes:
       - name: identity
         secret:
-          secretName: {{ required "identity.existingSecret is required" .Values.identity.existingSecret }}
+          secretName: {{ $identitySecretName }}
           items:
           - key: identity
             path: identity
-
