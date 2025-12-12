@@ -1,4 +1,5 @@
 [![CircleCI](https://circleci.com/gh/giantswarm/teleport-exporter.svg?style=shield)](https://circleci.com/gh/giantswarm/teleport-exporter)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/giantswarm/teleport-exporter/badge)](https://securityscorecards.dev/viewer/?uri=github.com/giantswarm/teleport-exporter)
 
 # teleport-exporter
 
