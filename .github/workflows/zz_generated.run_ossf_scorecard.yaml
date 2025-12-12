@@ -29,4 +29,3 @@ jobs:
     uses: giantswarm/github-workflows/.github/workflows/ossf-scorecard.yaml@main
     secrets:
       scorecard_token: ${{ secrets.SCORECARD_TOKEN }}
-

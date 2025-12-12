@@ -12,4 +12,3 @@ on:
 jobs:
   publish:
     uses: giantswarm/github-workflows/.github/workflows/gitleaks.yaml@main
-

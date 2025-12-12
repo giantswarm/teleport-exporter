@@ -20,4 +20,3 @@ on:
 jobs:
   check:
     uses: giantswarm/github-workflows/.github/workflows/chart-values.yaml@main
-
