@@ -37,4 +37,3 @@ jobs:
       branch: ${{ inputs.branch }}
     secrets:
       TAYLORBOT_GITHUB_ACTION: ${{ secrets.TAYLORBOT_GITHUB_ACTION }}
-

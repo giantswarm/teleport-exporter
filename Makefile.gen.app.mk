@@ -46,4 +46,3 @@ check-env:
 ifndef APPLICATION
 	$(error APPLICATION is not defined)
 endif
-

@@ -122,4 +122,3 @@ build-docker: build-linux ## Builds docker image to registry.
 	@echo "====> $@"
 	cp -a $(APPLICATION)-linux $(APPLICATION)
 	docker build -t ${APPLICATION}:${VERSION} .
-
