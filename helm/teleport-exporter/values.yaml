@@ -123,6 +123,16 @@ monitoring:
         regex: pod|service|container
     metricRelabelings: []
 
+  # Grafana dashboard ConfigMap for automatic provisioning
+  grafanaDashboard:
+    enabled: true
+    # Namespace where the ConfigMap will be created (typically where Grafana is deployed)
+    namespace: monitoring
+    # Additional labels for the ConfigMap
+    labels: {}
+    # Additional annotations for the ConfigMap
+    annotations: {}
+
 networkpolicy:
   enabled: true
 
