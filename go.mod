@@ -7,7 +7,7 @@ require (
 	github.com/go-logr/zapr v1.3.0
 	github.com/gravitational/teleport/api v0.0.0-20251204191018-a7f136a5b728
 	github.com/prometheus/client_golang v1.23.2
-	go.uber.org/zap v1.27.0
+	go.uber.org/zap v1.27.1
 )
 
 require (
