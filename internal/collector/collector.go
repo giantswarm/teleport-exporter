@@ -26,10 +26,20 @@ import (
 	"github.com/giantswarm/teleport-exporter/internal/teleport"
 )
 
+// Resource type constants for error tracking
+const (
+	ResourceTypeCluster    = "cluster"
+	ResourceTypeNodes      = "nodes"
+	ResourceTypeKubernetes = "kubernetes"
+	ResourceTypeDatabases  = "databases"
+	ResourceTypeApps       = "apps"
+)
+
 // Config holds the configuration for the collector.
 type Config struct {
 	TeleportClient  *teleport.Client
 	RefreshInterval time.Duration
+	APITimeout      time.Duration
 	Log             logr.Logger
 }
 
@@ -74,12 +84,14 @@ func (c *Collector) collect(ctx context.Context) {
 	c.log.V(1).Info("collecting metrics from Teleport")
 
 	startTime := time.Now()
+	var collectionSuccessful = true
 
 	// Get cluster name
 	clusterName, err := c.client.GetClusterName(ctx)
 	if err != nil {
 		c.log.Error(err, "failed to get cluster name")
 		metrics.TeleportUp.Set(0)
+		metrics.CollectErrorsTotal.WithLabelValues(ResourceTypeCluster).Inc()
 		return
 	}
 
@@ -90,6 +102,8 @@ func (c *Collector) collect(ctx context.Context) {
 	nodes, err := c.client.GetNodes(ctx)
 	if err != nil {
 		c.log.Error(err, "failed to get nodes")
+		metrics.CollectErrorsTotal.WithLabelValues(ResourceTypeNodes).Inc()
+		collectionSuccessful = false
 	} else {
 		c.updateNodeMetrics(clusterName, nodes)
 	}
@@ -98,6 +112,8 @@ func (c *Collector) collect(ctx context.Context) {
 	kubeClusters, err := c.client.GetKubeClusters(ctx)
 	if err != nil {
 		c.log.Error(err, "failed to get Kubernetes clusters")
+		metrics.CollectErrorsTotal.WithLabelValues(ResourceTypeKubernetes).Inc()
+		collectionSuccessful = false
 	} else {
 		c.updateKubeClusterMetrics(clusterName, kubeClusters)
 	}
@@ -106,6 +122,8 @@ func (c *Collector) collect(ctx context.Context) {
 	databases, err := c.client.GetDatabases(ctx)
 	if err != nil {
 		c.log.Error(err, "failed to get databases")
+		metrics.CollectErrorsTotal.WithLabelValues(ResourceTypeDatabases).Inc()
+		collectionSuccessful = false
 	} else {
 		c.updateDatabaseMetrics(clusterName, databases)
 	}
@@ -114,13 +132,20 @@ func (c *Collector) collect(ctx context.Context) {
 	apps, err := c.client.GetApps(ctx)
 	if err != nil {
 		c.log.Error(err, "failed to get applications")
+		metrics.CollectErrorsTotal.WithLabelValues(ResourceTypeApps).Inc()
+		collectionSuccessful = false
 	} else {
 		c.updateAppMetrics(clusterName, apps)
 	}
 
 	duration := time.Since(startTime)
-	metrics.CollectDuration.Set(duration.Seconds())
-	c.log.V(1).Info("metrics collection completed", "duration", duration)
+	metrics.CollectDurationHistogram.Observe(duration.Seconds())
+
+	if collectionSuccessful {
+		metrics.LastSuccessfulCollectTime.Set(float64(time.Now().Unix()))
+	}
+
+	c.log.V(1).Info("metrics collection completed", "duration", duration, "successful", collectionSuccessful)
 }
 
 func (c *Collector) updateNodeMetrics(clusterName string, nodes []teleport.NodeInfo) {

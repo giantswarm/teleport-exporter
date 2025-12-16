@@ -19,9 +19,15 @@ package teleport
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/gravitational/teleport/api/client"
+)
+
+const (
+	// Default timeout for API operations if not specified
+	defaultAPITimeout = 30 * time.Second
 )
 
 // Config holds the configuration for the Teleport client.
@@ -32,16 +38,19 @@ type Config struct {
 	IdentityFile string
 	// Insecure skips TLS certificate verification.
 	Insecure bool
+	// APITimeout is the timeout for API calls.
+	APITimeout time.Duration
 	// Log is the logger to use.
 	Log logr.Logger
 }
 
 // Client wraps the Teleport API client.
 type Client struct {
-	client    *client.Client
-	log       logr.Logger
-	connected bool
-	mu        sync.RWMutex
+	client     *client.Client
+	log        logr.Logger
+	apiTimeout time.Duration
+	connected  bool
+	mu         sync.RWMutex
 }
 
 // NodeInfo represents information about a Teleport node.
@@ -80,9 +89,18 @@ type AppInfo struct {
 func NewClient(cfg Config) (*Client, error) {
 	cfg.Log.Info("connecting to Teleport", "addr", cfg.ProxyAddr)
 
+	apiTimeout := cfg.APITimeout
+	if apiTimeout == 0 {
+		apiTimeout = defaultAPITimeout
+	}
+
+	// Use timeout for initial connection
+	ctx, cancel := context.WithTimeout(context.Background(), apiTimeout)
+	defer cancel()
+
 	creds := client.LoadIdentityFile(cfg.IdentityFile)
 
-	c, err := client.New(context.Background(), client.Config{
+	c, err := client.New(ctx, client.Config{
 		Addrs:                    []string{cfg.ProxyAddr},
 		Credentials:              []client.Credentials{creds},
 		InsecureAddressDiscovery: cfg.Insecure,
@@ -94,9 +112,10 @@ func NewClient(cfg Config) (*Client, error) {
 	cfg.Log.Info("connected to Teleport successfully")
 
 	return &Client{
-		client:    c,
-		log:       cfg.Log,
-		connected: true,
+		client:     c,
+		log:        cfg.Log,
+		apiTimeout: apiTimeout,
+		connected:  true,
 	}, nil
 }
 
@@ -108,16 +127,38 @@ func (c *Client) Close() error {
 	return c.client.Close()
 }
 
-// IsConnected returns whether the client is connected.
+// IsConnected returns whether the client is connected by performing a health check.
 func (c *Client) IsConnected() bool {
 	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.connected
+	if !c.connected {
+		c.mu.RUnlock()
+		return false
+	}
+	c.mu.RUnlock()
+
+	// Perform actual health check with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	_, err := c.client.Ping(ctx)
+	if err != nil {
+		c.log.V(1).Info("health check failed", "error", err)
+		return false
+	}
+	return true
+}
+
+// withTimeout returns a context with the configured API timeout.
+func (c *Client) withTimeout(ctx context.Context) (context.Context, context.CancelFunc) {
+	return context.WithTimeout(ctx, c.apiTimeout)
 }
 
 // GetNodes returns all nodes registered in Teleport.
 func (c *Client) GetNodes(ctx context.Context) ([]NodeInfo, error) {
 	c.log.V(1).Info("fetching nodes from Teleport")
+
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
 
 	nodes, err := c.client.GetNodes(ctx, "default")
 	if err != nil {
@@ -144,6 +185,9 @@ func (c *Client) GetNodes(ctx context.Context) ([]NodeInfo, error) {
 // GetKubeClusters returns all Kubernetes clusters registered in Teleport.
 func (c *Client) GetKubeClusters(ctx context.Context) ([]KubeClusterInfo, error) {
 	c.log.V(1).Info("fetching Kubernetes clusters from Teleport")
+
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
 
 	clusters, err := c.client.GetKubernetesServers(ctx)
 	if err != nil {
@@ -175,6 +219,9 @@ func (c *Client) GetKubeClusters(ctx context.Context) ([]KubeClusterInfo, error)
 // GetDatabases returns all databases registered in Teleport.
 func (c *Client) GetDatabases(ctx context.Context) ([]DatabaseInfo, error) {
 	c.log.V(1).Info("fetching databases from Teleport")
+
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
 
 	databases, err := c.client.GetDatabaseServers(ctx, "default")
 	if err != nil {
@@ -209,6 +256,9 @@ func (c *Client) GetDatabases(ctx context.Context) ([]DatabaseInfo, error) {
 func (c *Client) GetApps(ctx context.Context) ([]AppInfo, error) {
 	c.log.V(1).Info("fetching applications from Teleport")
 
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
+
 	servers, err := c.client.GetApplicationServers(ctx, "default")
 	if err != nil {
 		c.log.Error(err, "failed to get applications")
@@ -240,6 +290,9 @@ func (c *Client) GetApps(ctx context.Context) ([]AppInfo, error) {
 
 // GetClusterName returns the name of the connected Teleport cluster.
 func (c *Client) GetClusterName(ctx context.Context) (string, error) {
+	ctx, cancel := c.withTimeout(ctx)
+	defer cancel()
+
 	cn, err := c.client.GetClusterName(ctx)
 	if err != nil {
 		return "", err

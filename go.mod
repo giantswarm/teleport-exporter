@@ -28,6 +28,7 @@ require (
 	github.com/gravitational/trace v1.5.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.2 // indirect
 	github.com/jonboulle/clockwork v0.5.0 // indirect
+	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/mattermost/xml-roundtrip-validator v0.1.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect

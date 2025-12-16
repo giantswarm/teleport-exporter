@@ -26,6 +26,13 @@ const (
 )
 
 var (
+	// BuildInfo exposes build information as a metric.
+	BuildInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "build_info",
+		Help:      "Build information for the teleport-exporter. Value is always 1.",
+	}, []string{"version", "commit", "build_date", "go_version"})
+
 	// TeleportUp indicates whether the exporter can successfully connect to Teleport.
 	TeleportUp = promauto.NewGauge(prometheus.GaugeOpts{
 		Namespace: namespace,
@@ -96,10 +103,25 @@ var (
 		Help:      "Information about each application registered in Teleport. Value is always 1.",
 	}, []string{"cluster_name", "app_name", "public_addr"})
 
-	// CollectDuration is the duration of the last metrics collection.
-	CollectDuration = promauto.NewGauge(prometheus.GaugeOpts{
+	// CollectDurationHistogram is a histogram of collection durations.
+	CollectDurationHistogram = promauto.NewHistogram(prometheus.HistogramOpts{
 		Namespace: namespace,
 		Name:      "collect_duration_seconds",
-		Help:      "Duration of the last metrics collection in seconds.",
+		Help:      "Histogram of metrics collection duration in seconds.",
+		Buckets:   []float64{0.1, 0.25, 0.5, 1, 2.5, 5, 10, 30, 60},
+	})
+
+	// CollectErrorsTotal counts the number of collection errors by type.
+	CollectErrorsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: namespace,
+		Name:      "collect_errors_total",
+		Help:      "Total number of errors encountered during metrics collection.",
+	}, []string{"resource_type"})
+
+	// LastSuccessfulCollectTime is the timestamp of the last successful collection.
+	LastSuccessfulCollectTime = promauto.NewGauge(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "last_successful_collect_timestamp_seconds",
+		Help:      "Unix timestamp of the last successful metrics collection.",
 	})
 )
