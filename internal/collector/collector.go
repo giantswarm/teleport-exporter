@@ -18,6 +18,8 @@ package collector
 
 import (
 	"context"
+	"math/rand"
+	"sync"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -35,6 +37,13 @@ const (
 	ResourceTypeApps       = "apps"
 )
 
+const (
+	// maxBackoffMultiplier is the maximum multiplier for exponential backoff
+	maxBackoffMultiplier = 8
+	// jitterFraction is the fraction of the interval to use for jitter (0.1 = 10%)
+	jitterFraction = 0.1
+)
+
 // Config holds the configuration for the collector.
 type Config struct {
 	TeleportClient  *teleport.Client
@@ -48,43 +57,86 @@ type Collector struct {
 	client          *teleport.Client
 	refreshInterval time.Duration
 	log             logr.Logger
+
+	// Tracking for smart metric cleanup (avoid Reset() gaps)
+	mu                sync.RWMutex
+	lastNodes         map[string]struct{} // key: "clusterName|nodeName|hostname|address|namespace|subkind"
+	lastKubeClusters  map[string]struct{} // key: "clusterName|kubeClusterName"
+	lastDatabases     map[string]struct{} // key: "clusterName|dbName|protocol|type"
+	lastApps          map[string]struct{} // key: "clusterName|appName|publicAddr"
+	consecutiveErrors int
 }
 
 // New creates a new Collector.
 func New(cfg Config) *Collector {
 	return &Collector{
-		client:          cfg.TeleportClient,
-		refreshInterval: cfg.RefreshInterval,
-		log:             cfg.Log,
+		client:           cfg.TeleportClient,
+		refreshInterval:  cfg.RefreshInterval,
+		log:              cfg.Log,
+		lastNodes:        make(map[string]struct{}),
+		lastKubeClusters: make(map[string]struct{}),
+		lastDatabases:    make(map[string]struct{}),
+		lastApps:         make(map[string]struct{}),
 	}
 }
 
-// Run starts the collector loop.
+// Run starts the collector loop with jitter and exponential backoff.
 func (c *Collector) Run(ctx context.Context) {
 	c.log.Info("starting collector", "refreshInterval", c.refreshInterval)
 
-	// Initial collection
-	c.collect(ctx)
+	// Initial collection with small random delay to avoid thundering herd on startup
+	initialJitter := time.Duration(rand.Int63n(int64(c.refreshInterval / 4)))
+	c.log.V(1).Info("waiting before initial collection", "jitter", initialJitter)
 
-	ticker := time.NewTicker(c.refreshInterval)
-	defer ticker.Stop()
+	select {
+	case <-ctx.Done():
+		return
+	case <-time.After(initialJitter):
+		c.collect(ctx)
+	}
 
 	for {
+		// Calculate next interval with jitter and backoff
+		interval := c.calculateNextInterval()
+
 		select {
 		case <-ctx.Done():
 			c.log.Info("stopping collector")
 			return
-		case <-ticker.C:
+		case <-time.After(interval):
 			c.collect(ctx)
 		}
 	}
+}
+
+// calculateNextInterval returns the next polling interval with jitter and backoff.
+func (c *Collector) calculateNextInterval() time.Duration {
+	c.mu.RLock()
+	errors := c.consecutiveErrors
+	c.mu.RUnlock()
+
+	// Base interval
+	interval := c.refreshInterval
+
+	// Apply exponential backoff if we have consecutive errors
+	if errors > 0 {
+		multiplier := 1 << min(errors, maxBackoffMultiplier) // 2^errors, capped
+		interval = time.Duration(multiplier) * c.refreshInterval
+		c.log.V(1).Info("applying backoff", "consecutiveErrors", errors, "interval", interval)
+	}
+
+	// Add jitter (±10% of interval)
+	jitter := time.Duration(float64(interval) * jitterFraction * (2*rand.Float64() - 1))
+	interval += jitter
+
+	return interval
 }
 
 func (c *Collector) collect(ctx context.Context) {
 	c.log.V(1).Info("collecting metrics from Teleport")
 
 	startTime := time.Now()
-	var collectionSuccessful = true
+	var hadErrors bool
 
 	// Get cluster name
 	clusterName, err := c.client.GetClusterName(ctx)
@@ -92,18 +144,19 @@ func (c *Collector) collect(ctx context.Context) {
 		c.log.Error(err, "failed to get cluster name")
 		metrics.TeleportUp.Set(0)
 		metrics.CollectErrorsTotal.WithLabelValues(ResourceTypeCluster).Inc()
+		c.incrementErrors()
 		return
 	}
 
 	metrics.TeleportUp.Set(1)
 	metrics.ClusterInfo.WithLabelValues(clusterName).Set(1)
 
-	// Collect nodes
+	// Collect nodes - on error, keep previous metrics (don't clear them)
 	nodes, err := c.client.GetNodes(ctx)
 	if err != nil {
 		c.log.Error(err, "failed to get nodes")
 		metrics.CollectErrorsTotal.WithLabelValues(ResourceTypeNodes).Inc()
-		collectionSuccessful = false
+		hadErrors = true
 	} else {
 		c.updateNodeMetrics(clusterName, nodes)
 	}
@@ -113,7 +166,7 @@ func (c *Collector) collect(ctx context.Context) {
 	if err != nil {
 		c.log.Error(err, "failed to get Kubernetes clusters")
 		metrics.CollectErrorsTotal.WithLabelValues(ResourceTypeKubernetes).Inc()
-		collectionSuccessful = false
+		hadErrors = true
 	} else {
 		c.updateKubeClusterMetrics(clusterName, kubeClusters)
 	}
@@ -123,7 +176,7 @@ func (c *Collector) collect(ctx context.Context) {
 	if err != nil {
 		c.log.Error(err, "failed to get databases")
 		metrics.CollectErrorsTotal.WithLabelValues(ResourceTypeDatabases).Inc()
-		collectionSuccessful = false
+		hadErrors = true
 	} else {
 		c.updateDatabaseMetrics(clusterName, databases)
 	}
@@ -133,7 +186,7 @@ func (c *Collector) collect(ctx context.Context) {
 	if err != nil {
 		c.log.Error(err, "failed to get applications")
 		metrics.CollectErrorsTotal.WithLabelValues(ResourceTypeApps).Inc()
-		collectionSuccessful = false
+		hadErrors = true
 	} else {
 		c.updateAppMetrics(clusterName, apps)
 	}
@@ -141,18 +194,40 @@ func (c *Collector) collect(ctx context.Context) {
 	duration := time.Since(startTime)
 	metrics.CollectDurationHistogram.Observe(duration.Seconds())
 
-	if collectionSuccessful {
+	if hadErrors {
+		c.incrementErrors()
+	} else {
+		c.resetErrors()
 		metrics.LastSuccessfulCollectTime.Set(float64(time.Now().Unix()))
 	}
 
-	c.log.V(1).Info("metrics collection completed", "duration", duration, "successful", collectionSuccessful)
+	c.log.V(1).Info("metrics collection completed", "duration", duration, "hadErrors", hadErrors)
+}
+
+// incrementErrors increases the consecutive error count for backoff calculation.
+func (c *Collector) incrementErrors() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.consecutiveErrors++
+}
+
+// resetErrors resets the consecutive error count after a successful collection.
+func (c *Collector) resetErrors() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.consecutiveErrors = 0
 }
 
 func (c *Collector) updateNodeMetrics(clusterName string, nodes []teleport.NodeInfo) {
-	// Reset the node info metric to clear stale entries
-	metrics.NodeInfo.Reset()
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Build set of current nodes
+	currentNodes := make(map[string]struct{}, len(nodes))
 
 	for _, node := range nodes {
+		key := clusterName + "|" + node.Name + "|" + node.Hostname + "|" + node.Address + "|" + node.Namespace + "|" + node.SubKind
+		currentNodes[key] = struct{}{}
 		metrics.NodeInfo.WithLabelValues(
 			clusterName,
 			node.Name,
@@ -163,30 +238,63 @@ func (c *Collector) updateNodeMetrics(clusterName string, nodes []teleport.NodeI
 		).Set(1)
 	}
 
+	// Delete metrics for nodes that no longer exist (instead of Reset())
+	for key := range c.lastNodes {
+		if _, exists := currentNodes[key]; !exists {
+			// Parse the key to get label values
+			parts := splitKey(key, 6)
+			if len(parts) == 6 {
+				metrics.NodeInfo.DeleteLabelValues(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5])
+			}
+		}
+	}
+
+	c.lastNodes = currentNodes
 	metrics.NodesTotal.WithLabelValues(clusterName).Set(float64(len(nodes)))
 	c.log.V(1).Info("updated node metrics", "count", len(nodes))
 }
 
 func (c *Collector) updateKubeClusterMetrics(clusterName string, clusters []teleport.KubeClusterInfo) {
-	// Reset the kube cluster info metric to clear stale entries
-	metrics.KubeClusterInfo.Reset()
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Build set of current clusters
+	currentClusters := make(map[string]struct{}, len(clusters))
 
 	for _, cluster := range clusters {
+		key := clusterName + "|" + cluster.Name
+		currentClusters[key] = struct{}{}
 		metrics.KubeClusterInfo.WithLabelValues(
 			clusterName,
 			cluster.Name,
 		).Set(1)
 	}
 
+	// Delete metrics for clusters that no longer exist
+	for key := range c.lastKubeClusters {
+		if _, exists := currentClusters[key]; !exists {
+			parts := splitKey(key, 2)
+			if len(parts) == 2 {
+				metrics.KubeClusterInfo.DeleteLabelValues(parts[0], parts[1])
+			}
+		}
+	}
+
+	c.lastKubeClusters = currentClusters
 	metrics.KubeClustersTotal.WithLabelValues(clusterName).Set(float64(len(clusters)))
 	c.log.V(1).Info("updated Kubernetes cluster metrics", "count", len(clusters))
 }
 
 func (c *Collector) updateDatabaseMetrics(clusterName string, databases []teleport.DatabaseInfo) {
-	// Reset the database info metric to clear stale entries
-	metrics.DatabaseInfo.Reset()
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Build set of current databases
+	currentDatabases := make(map[string]struct{}, len(databases))
 
 	for _, db := range databases {
+		key := clusterName + "|" + db.Name + "|" + db.Protocol + "|" + db.Type
+		currentDatabases[key] = struct{}{}
 		metrics.DatabaseInfo.WithLabelValues(
 			clusterName,
 			db.Name,
@@ -195,15 +303,31 @@ func (c *Collector) updateDatabaseMetrics(clusterName string, databases []telepo
 		).Set(1)
 	}
 
+	// Delete metrics for databases that no longer exist
+	for key := range c.lastDatabases {
+		if _, exists := currentDatabases[key]; !exists {
+			parts := splitKey(key, 4)
+			if len(parts) == 4 {
+				metrics.DatabaseInfo.DeleteLabelValues(parts[0], parts[1], parts[2], parts[3])
+			}
+		}
+	}
+
+	c.lastDatabases = currentDatabases
 	metrics.DatabasesTotal.WithLabelValues(clusterName).Set(float64(len(databases)))
 	c.log.V(1).Info("updated database metrics", "count", len(databases))
 }
 
 func (c *Collector) updateAppMetrics(clusterName string, apps []teleport.AppInfo) {
-	// Reset the app info metric to clear stale entries
-	metrics.AppInfo.Reset()
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Build set of current apps
+	currentApps := make(map[string]struct{}, len(apps))
 
 	for _, app := range apps {
+		key := clusterName + "|" + app.Name + "|" + app.PublicAddr
+		currentApps[key] = struct{}{}
 		metrics.AppInfo.WithLabelValues(
 			clusterName,
 			app.Name,
@@ -211,6 +335,31 @@ func (c *Collector) updateAppMetrics(clusterName string, apps []teleport.AppInfo
 		).Set(1)
 	}
 
+	// Delete metrics for apps that no longer exist
+	for key := range c.lastApps {
+		if _, exists := currentApps[key]; !exists {
+			parts := splitKey(key, 3)
+			if len(parts) == 3 {
+				metrics.AppInfo.DeleteLabelValues(parts[0], parts[1], parts[2])
+			}
+		}
+	}
+
+	c.lastApps = currentApps
 	metrics.AppsTotal.WithLabelValues(clusterName).Set(float64(len(apps)))
 	c.log.V(1).Info("updated application metrics", "count", len(apps))
+}
+
+// splitKey splits a pipe-delimited key into parts.
+func splitKey(key string, expectedParts int) []string {
+	parts := make([]string, 0, expectedParts)
+	start := 0
+	for i := 0; i < len(key); i++ {
+		if key[i] == '|' {
+			parts = append(parts, key[start:i])
+			start = i + 1
+		}
+	}
+	parts = append(parts, key[start:])
+	return parts
 }

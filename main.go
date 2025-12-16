@@ -62,7 +62,7 @@ func main() {
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.StringVar(&teleportAddr, "teleport-addr", "", "The address of the Teleport proxy/auth server (e.g., teleport.example.com:443).")
 	flag.StringVar(&identityFile, "identity-file", "", "Path to the identity file for authentication.")
-	flag.DurationVar(&refreshInterval, "refresh-interval", 30*time.Second, "How often to refresh metrics from Teleport API.")
+	flag.DurationVar(&refreshInterval, "refresh-interval", 60*time.Second, "How often to refresh metrics from Teleport API.")
 	flag.DurationVar(&apiTimeout, "api-timeout", 30*time.Second, "Timeout for Teleport API calls.")
 	flag.BoolVar(&insecure, "insecure", false, "Skip TLS certificate verification (not recommended for production).")
 	flag.BoolVar(&showVersion, "version", false, "Print version information and exit.")
