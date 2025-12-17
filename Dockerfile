@@ -1,6 +1,10 @@
 # Build the exporter binary
 FROM golang:1.25.5 AS builder
 
+ARG VERSION=dev
+ARG COMMIT=unknown
+ARG BUILD_DATE=unknown
+
 WORKDIR /workspace
 
 # Allow Go to download newer toolchain if needed
@@ -18,8 +22,13 @@ RUN go mod download
 COPY main.go main.go
 COPY internal/ internal/
 
-# Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -o teleport-exporter main.go
+# Build with version information
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a \
+    -ldflags "-s -w \
+    -X github.com/giantswarm/teleport-exporter/internal/version.Version=${VERSION} \
+    -X github.com/giantswarm/teleport-exporter/internal/version.Commit=${COMMIT} \
+    -X github.com/giantswarm/teleport-exporter/internal/version.BuildDate=${BUILD_DATE}" \
+    -o teleport-exporter main.go
 
 # Use distroless as minimal base image to package the exporter binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details

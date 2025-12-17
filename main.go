@@ -23,6 +23,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -31,7 +32,18 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/giantswarm/teleport-exporter/internal/collector"
+	"github.com/giantswarm/teleport-exporter/internal/metrics"
 	"github.com/giantswarm/teleport-exporter/internal/teleport"
+	"github.com/giantswarm/teleport-exporter/internal/version"
+)
+
+const (
+	// HTTP server timeouts for security hardening
+	httpReadTimeout     = 10 * time.Second
+	httpWriteTimeout    = 10 * time.Second
+	httpIdleTimeout     = 60 * time.Second
+	httpMaxHeaderBytes  = 1 << 20 // 1 MB
+	httpShutdownTimeout = 10 * time.Second
 )
 
 func main() {
@@ -41,16 +53,31 @@ func main() {
 		teleportAddr    string
 		identityFile    string
 		refreshInterval time.Duration
+		apiTimeout      time.Duration
 		insecure        bool
+		showVersion     bool
 	)
 
 	flag.StringVar(&metricsAddr, "metrics-bind-address", ":8080", "The address the metric endpoint binds to.")
 	flag.StringVar(&probeAddr, "health-probe-bind-address", ":8081", "The address the probe endpoint binds to.")
 	flag.StringVar(&teleportAddr, "teleport-addr", "", "The address of the Teleport proxy/auth server (e.g., teleport.example.com:443).")
 	flag.StringVar(&identityFile, "identity-file", "", "Path to the identity file for authentication.")
-	flag.DurationVar(&refreshInterval, "refresh-interval", 30*time.Second, "How often to refresh metrics from Teleport API.")
+	flag.DurationVar(&refreshInterval, "refresh-interval", 60*time.Second, "How often to refresh metrics from Teleport API.")
+	flag.DurationVar(&apiTimeout, "api-timeout", 30*time.Second, "Timeout for Teleport API calls.")
 	flag.BoolVar(&insecure, "insecure", false, "Skip TLS certificate verification (not recommended for production).")
+	flag.BoolVar(&showVersion, "version", false, "Print version information and exit.")
 	flag.Parse()
+
+	// Handle version flag
+	if showVersion {
+		v := version.Get()
+		fmt.Printf("teleport-exporter %s\n", v.Version)
+		fmt.Printf("  commit: %s\n", v.Commit)
+		fmt.Printf("  built:  %s\n", v.BuildDate)
+		fmt.Printf("  go:     %s\n", v.GoVersion)
+		fmt.Printf("  platform: %s\n", v.Platform)
+		os.Exit(0)
+	}
 
 	// Initialize logger
 	zapLog, err := zap.NewProduction()
@@ -60,6 +87,18 @@ func main() {
 	}
 	defer zapLog.Sync()
 	log := zapr.NewLogger(zapLog)
+
+	// Log version information at startup
+	v := version.Get()
+	log.Info("Starting teleport-exporter",
+		"version", v.Version,
+		"commit", v.Commit,
+		"buildDate", v.BuildDate,
+		"goVersion", v.GoVersion,
+	)
+
+	// Register build info metric
+	metrics.BuildInfo.WithLabelValues(v.Version, v.Commit, v.BuildDate, runtime.Version()).Set(1)
 
 	if teleportAddr == "" {
 		log.Error(nil, "teleport-addr is required")
@@ -71,10 +110,12 @@ func main() {
 		os.Exit(1)
 	}
 
-	log.Info("Starting teleport-exporter",
+	log.Info("Configuration",
 		"teleportAddr", teleportAddr,
 		"metricsAddr", metricsAddr,
+		"probeAddr", probeAddr,
 		"refreshInterval", refreshInterval,
+		"apiTimeout", apiTimeout,
 	)
 
 	// Create Teleport client
@@ -82,6 +123,7 @@ func main() {
 		ProxyAddr:    teleportAddr,
 		IdentityFile: identityFile,
 		Insecure:     insecure,
+		APITimeout:   apiTimeout,
 		Log:          log.WithName("teleport-client"),
 	})
 	if err != nil {
@@ -94,6 +136,7 @@ func main() {
 	col := collector.New(collector.Config{
 		TeleportClient:  teleportClient,
 		RefreshInterval: refreshInterval,
+		APITimeout:      apiTimeout,
 		Log:             log.WithName("collector"),
 	})
 
@@ -103,23 +146,31 @@ func main() {
 	// Start the collector
 	go col.Run(ctx)
 
-	// Set up metrics server
+	// Set up metrics server with security hardening
 	metricsMux := http.NewServeMux()
 	metricsMux.Handle("/metrics", promhttp.Handler())
 
 	metricsServer := &http.Server{
-		Addr:    metricsAddr,
-		Handler: metricsMux,
+		Addr:           metricsAddr,
+		Handler:        metricsMux,
+		ReadTimeout:    httpReadTimeout,
+		WriteTimeout:   httpWriteTimeout,
+		IdleTimeout:    httpIdleTimeout,
+		MaxHeaderBytes: httpMaxHeaderBytes,
 	}
 
-	// Set up health probe server
+	// Set up health probe server with security hardening
 	probeMux := http.NewServeMux()
 	probeMux.HandleFunc("/healthz", healthHandler)
 	probeMux.HandleFunc("/readyz", readyHandler(teleportClient))
 
 	probeServer := &http.Server{
-		Addr:    probeAddr,
-		Handler: probeMux,
+		Addr:           probeAddr,
+		Handler:        probeMux,
+		ReadTimeout:    httpReadTimeout,
+		WriteTimeout:   httpWriteTimeout,
+		IdleTimeout:    httpIdleTimeout,
+		MaxHeaderBytes: httpMaxHeaderBytes,
 	}
 
 	// Start servers
@@ -140,20 +191,30 @@ func main() {
 	// Wait for shutdown signal
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
-	<-sigCh
+	sig := <-sigCh
 
-	log.Info("shutting down")
+	log.Info("received shutdown signal", "signal", sig.String())
 	cancel()
 
-	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
+	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), httpShutdownTimeout)
 	defer shutdownCancel()
 
+	// Shutdown servers gracefully
+	var shutdownErr error
 	if err := metricsServer.Shutdown(shutdownCtx); err != nil {
 		log.Error(err, "failed to shutdown metrics server")
+		shutdownErr = err
 	}
 	if err := probeServer.Shutdown(shutdownCtx); err != nil {
 		log.Error(err, "failed to shutdown probe server")
+		shutdownErr = err
 	}
+
+	if shutdownErr != nil {
+		log.Info("shutdown completed with errors")
+		os.Exit(1)
+	}
+	log.Info("shutdown completed successfully")
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
