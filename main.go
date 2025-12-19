@@ -23,7 +23,6 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
 	"time"
 
@@ -32,7 +31,6 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/giantswarm/teleport-exporter/internal/collector"
-	"github.com/giantswarm/teleport-exporter/internal/metrics"
 	"github.com/giantswarm/teleport-exporter/internal/teleport"
 	"github.com/giantswarm/teleport-exporter/internal/version"
 )
@@ -88,7 +86,7 @@ func main() {
 	defer zapLog.Sync()
 	log := zapr.NewLogger(zapLog)
 
-	// Log version information at startup
+	// Log version information at startup (no build_info metric to reduce cardinality)
 	v := version.Get()
 	log.Info("Starting teleport-exporter",
 		"version", v.Version,
@@ -96,9 +94,6 @@ func main() {
 		"buildDate", v.BuildDate,
 		"goVersion", v.GoVersion,
 	)
-
-	// Register build info metric
-	metrics.BuildInfo.WithLabelValues(v.Version, v.Commit, v.BuildDate, runtime.Version()).Set(1)
 
 	if teleportAddr == "" {
 		log.Error(nil, "teleport-addr is required")

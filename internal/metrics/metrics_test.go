@@ -37,45 +37,52 @@ func TestTeleportUp(t *testing.T) {
 	}
 }
 
-func TestClusterInfo(t *testing.T) {
-	ClusterInfo.Reset()
+func TestNodesTotal(t *testing.T) {
+	NodesTotal.Set(10)
+	value := testutil.ToFloat64(NodesTotal)
+	if value != 10 {
+		t.Errorf("expected NodesTotal to be 10, got %f", value)
+	}
 
-	ClusterInfo.WithLabelValues("test-cluster").Set(1)
-	value := testutil.ToFloat64(ClusterInfo.WithLabelValues("test-cluster"))
-	if value != 1 {
-		t.Errorf("expected ClusterInfo to be 1, got %f", value)
+	NodesTotal.Set(20)
+	value = testutil.ToFloat64(NodesTotal)
+	if value != 20 {
+		t.Errorf("expected NodesTotal to be 20, got %f", value)
 	}
 }
 
 func TestCollectErrorsTotal(t *testing.T) {
 	// Test that error counter increments correctly
-	initialValue := testutil.ToFloat64(CollectErrorsTotal.WithLabelValues("nodes"))
+	initialValue := testutil.ToFloat64(CollectErrorsTotal)
 
-	CollectErrorsTotal.WithLabelValues("nodes").Inc()
+	CollectErrorsTotal.Inc()
 
-	newValue := testutil.ToFloat64(CollectErrorsTotal.WithLabelValues("nodes"))
+	newValue := testutil.ToFloat64(CollectErrorsTotal)
 	if newValue != initialValue+1 {
 		t.Errorf("expected CollectErrorsTotal to increment by 1, got %f", newValue-initialValue)
 	}
 }
 
-func TestCollectDurationHistogram(t *testing.T) {
-	// Test that histogram can observe values
-	CollectDurationHistogram.Observe(0.5)
-	CollectDurationHistogram.Observe(1.5)
-	CollectDurationHistogram.Observe(5.0)
+func TestCollectDuration(t *testing.T) {
+	// Test that gauge can be set
+	CollectDuration.Set(0.5)
+	value := testutil.ToFloat64(CollectDuration)
+	if value != 0.5 {
+		t.Errorf("expected CollectDuration to be 0.5, got %f", value)
+	}
 
-	// The histogram should have recorded these observations
-	// We can't easily test the exact values, but we can verify it doesn't panic
+	CollectDuration.Set(1.5)
+	value = testutil.ToFloat64(CollectDuration)
+	if value != 1.5 {
+		t.Errorf("expected CollectDuration to be 1.5, got %f", value)
+	}
 }
 
-func TestBuildInfo(t *testing.T) {
-	BuildInfo.Reset()
-
-	BuildInfo.WithLabelValues("1.0.0", "abc123", "2024-01-01", "go1.21.0").Set(1)
-	value := testutil.ToFloat64(BuildInfo.WithLabelValues("1.0.0", "abc123", "2024-01-01", "go1.21.0"))
-	if value != 1 {
-		t.Errorf("expected BuildInfo to be 1, got %f", value)
+func TestKubeClustersTotal(t *testing.T) {
+	KubeClustersTotal.Set(5)
+	value := testutil.ToFloat64(KubeClustersTotal)
+	if value != 5 {
+		t.Errorf("expected KubeClustersTotal to be 5, got %f", value)
 	}
 }
 
@@ -89,19 +96,18 @@ func TestLastSuccessfulCollectTime(t *testing.T) {
 	}
 }
 
-func TestNodesTotal(t *testing.T) {
-	NodesTotal.Reset()
-
-	NodesTotal.WithLabelValues("cluster-1").Set(10)
-	NodesTotal.WithLabelValues("cluster-2").Set(20)
-
-	value1 := testutil.ToFloat64(NodesTotal.WithLabelValues("cluster-1"))
-	if value1 != 10 {
-		t.Errorf("expected NodesTotal for cluster-1 to be 10, got %f", value1)
+func TestDatabasesTotal(t *testing.T) {
+	DatabasesTotal.Set(3)
+	value := testutil.ToFloat64(DatabasesTotal)
+	if value != 3 {
+		t.Errorf("expected DatabasesTotal to be 3, got %f", value)
 	}
+}
 
-	value2 := testutil.ToFloat64(NodesTotal.WithLabelValues("cluster-2"))
-	if value2 != 20 {
-		t.Errorf("expected NodesTotal for cluster-2 to be 20, got %f", value2)
+func TestAppsTotal(t *testing.T) {
+	AppsTotal.Set(7)
+	value := testutil.ToFloat64(AppsTotal)
+	if value != 7 {
+		t.Errorf("expected AppsTotal to be 7, got %f", value)
 	}
 }
