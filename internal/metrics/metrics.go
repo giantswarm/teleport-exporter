@@ -34,12 +34,11 @@ var (
 	})
 
 	// NodesTotal is the total number of nodes registered in Teleport.
-	// Note: cluster identity is provided by job/instance labels from Prometheus.
-	NodesTotal = promauto.NewGauge(prometheus.GaugeOpts{
+	NodesTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "nodes_total",
 		Help:      "Total number of nodes registered in the Teleport cluster.",
-	})
+	}, []string{"cluster_name"})
 
 	// NodeInfo provides detailed information about each node.
 	// High-cardinality metric - only for local Prometheus, not remote storage.
@@ -50,11 +49,11 @@ var (
 	}, []string{"node_name", "hostname", "address", "namespace", "subkind"})
 
 	// KubeClustersTotal is the total number of Kubernetes clusters registered in Teleport.
-	KubeClustersTotal = promauto.NewGauge(prometheus.GaugeOpts{
+	KubeClustersTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "kubernetes_clusters_total",
 		Help:      "Total number of Kubernetes clusters registered in the Teleport cluster.",
-	})
+	}, []string{"cluster_name"})
 
 	// KubeClusterInfo provides detailed information about each Kubernetes cluster.
 	// High-cardinality metric - only for local Prometheus, not remote storage.
@@ -65,11 +64,11 @@ var (
 	}, []string{"kube_cluster_name"})
 
 	// DatabasesTotal is the total number of databases registered in Teleport.
-	DatabasesTotal = promauto.NewGauge(prometheus.GaugeOpts{
+	DatabasesTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "databases_total",
 		Help:      "Total number of databases registered in the Teleport cluster.",
-	})
+	}, []string{"cluster_name"})
 
 	// DatabaseInfo provides detailed information about each database.
 	// High-cardinality metric - only for local Prometheus, not remote storage.
@@ -80,11 +79,11 @@ var (
 	}, []string{"database_name", "protocol", "type"})
 
 	// AppsTotal is the total number of applications registered in Teleport.
-	AppsTotal = promauto.NewGauge(prometheus.GaugeOpts{
+	AppsTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "apps_total",
 		Help:      "Total number of applications registered in the Teleport cluster.",
-	})
+	}, []string{"cluster_name"})
 
 	// AppInfo provides detailed information about each application.
 	// High-cardinality metric - only for local Prometheus, not remote storage.

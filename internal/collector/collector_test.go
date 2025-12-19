@@ -64,7 +64,7 @@ func TestCollector_UpdateNodeMetrics(t *testing.T) {
 	c.updateNodeMetrics("test-cluster", nodes)
 
 	// Verify total count
-	totalValue := testutil.ToFloat64(metrics.NodesTotal)
+	totalValue := testutil.ToFloat64(metrics.NodesTotal.WithLabelValues("test-cluster"))
 	if totalValue != 2 {
 		t.Errorf("expected NodesTotal to be 2, got %f", totalValue)
 	}
@@ -97,7 +97,7 @@ func TestCollector_UpdateNodeMetrics_RemovesStaleNodes(t *testing.T) {
 	c.updateNodeMetrics("test-cluster", nodes)
 
 	// Verify both nodes exist
-	if testutil.ToFloat64(metrics.NodesTotal) != 2 {
+	if testutil.ToFloat64(metrics.NodesTotal.WithLabelValues("test-cluster")) != 2 {
 		t.Error("expected 2 nodes after first update")
 	}
 
@@ -108,7 +108,7 @@ func TestCollector_UpdateNodeMetrics_RemovesStaleNodes(t *testing.T) {
 	c.updateNodeMetrics("test-cluster", nodes)
 
 	// Verify only 1 node exists
-	totalValue := testutil.ToFloat64(metrics.NodesTotal)
+	totalValue := testutil.ToFloat64(metrics.NodesTotal.WithLabelValues("test-cluster"))
 	if totalValue != 1 {
 		t.Errorf("expected NodesTotal to be 1 after removal, got %f", totalValue)
 	}
@@ -134,7 +134,7 @@ func TestCollector_UpdateKubeClusterMetrics(t *testing.T) {
 	c.updateKubeClusterMetrics("test-cluster", clusters)
 
 	// Verify total count
-	totalValue := testutil.ToFloat64(metrics.KubeClustersTotal)
+	totalValue := testutil.ToFloat64(metrics.KubeClustersTotal.WithLabelValues("test-cluster"))
 	if totalValue != 3 {
 		t.Errorf("expected KubeClustersTotal to be 3, got %f", totalValue)
 	}
@@ -167,7 +167,7 @@ func TestCollector_UpdateDatabaseMetrics(t *testing.T) {
 	c.updateDatabaseMetrics("test-cluster", databases)
 
 	// Verify total count
-	totalValue := testutil.ToFloat64(metrics.DatabasesTotal)
+	totalValue := testutil.ToFloat64(metrics.DatabasesTotal.WithLabelValues("test-cluster"))
 	if totalValue != 2 {
 		t.Errorf("expected DatabasesTotal to be 2, got %f", totalValue)
 	}
@@ -198,7 +198,7 @@ func TestCollector_UpdateAppMetrics(t *testing.T) {
 	c.updateAppMetrics("test-cluster", apps)
 
 	// Verify total count
-	totalValue := testutil.ToFloat64(metrics.AppsTotal)
+	totalValue := testutil.ToFloat64(metrics.AppsTotal.WithLabelValues("test-cluster"))
 	if totalValue != 1 {
 		t.Errorf("expected AppsTotal to be 1, got %f", totalValue)
 	}
