@@ -44,16 +44,6 @@ func TestNodesTotal(t *testing.T) {
 	value := testutil.ToFloat64(NodesTotal.WithLabelValues("test-cluster"))
 	if value != 10 {
 		t.Errorf("expected NodesTotal to be 10, got %f", value)
-	NodesTotal.Set(10)
-	value := testutil.ToFloat64(NodesTotal)
-	if value != 10 {
-		t.Errorf("expected NodesTotal to be 10, got %f", value)
-	}
-
-	NodesTotal.Set(20)
-	value = testutil.ToFloat64(NodesTotal)
-	if value != 20 {
-		t.Errorf("expected NodesTotal to be 20, got %f", value)
 	}
 }
 
@@ -89,8 +79,6 @@ func TestKubeClustersTotal(t *testing.T) {
 
 	KubeClustersTotal.WithLabelValues("test-cluster").Set(5)
 	value := testutil.ToFloat64(KubeClustersTotal.WithLabelValues("test-cluster"))
-	KubeClustersTotal.Set(5)
-	value := testutil.ToFloat64(KubeClustersTotal)
 	if value != 5 {
 		t.Errorf("expected KubeClustersTotal to be 5, got %f", value)
 	}
@@ -111,8 +99,6 @@ func TestDatabasesTotal(t *testing.T) {
 
 	DatabasesTotal.WithLabelValues("test-cluster").Set(3)
 	value := testutil.ToFloat64(DatabasesTotal.WithLabelValues("test-cluster"))
-	DatabasesTotal.Set(3)
-	value := testutil.ToFloat64(DatabasesTotal)
 	if value != 3 {
 		t.Errorf("expected DatabasesTotal to be 3, got %f", value)
 	}
@@ -123,10 +109,6 @@ func TestAppsTotal(t *testing.T) {
 
 	AppsTotal.WithLabelValues("test-cluster").Set(7)
 	value := testutil.ToFloat64(AppsTotal.WithLabelValues("test-cluster"))
-
-func TestAppsTotal(t *testing.T) {
-	AppsTotal.Set(7)
-	value := testutil.ToFloat64(AppsTotal)
 	if value != 7 {
 		t.Errorf("expected AppsTotal to be 7, got %f", value)
 	}
