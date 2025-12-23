@@ -208,7 +208,7 @@ func (c *Collector) resetErrors() {
 	c.consecutiveErrors = 0
 }
 
-func (c *Collector) updateNodeMetrics(_ string, nodes []teleport.NodeInfo) {
+func (c *Collector) updateNodeMetrics(clusterName string, nodes []teleport.NodeInfo) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -239,11 +239,11 @@ func (c *Collector) updateNodeMetrics(_ string, nodes []teleport.NodeInfo) {
 	}
 
 	c.lastNodes = currentNodes
-	metrics.NodesTotal.Set(float64(len(nodes)))
+	metrics.NodesTotal.WithLabelValues(clusterName).Set(float64(len(nodes)))
 	c.log.V(1).Info("updated node metrics", "count", len(nodes))
 }
 
-func (c *Collector) updateKubeClusterMetrics(_ string, clusters []teleport.KubeClusterInfo) {
+func (c *Collector) updateKubeClusterMetrics(clusterName string, clusters []teleport.KubeClusterInfo) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -264,11 +264,11 @@ func (c *Collector) updateKubeClusterMetrics(_ string, clusters []teleport.KubeC
 	}
 
 	c.lastKubeClusters = currentClusters
-	metrics.KubeClustersTotal.Set(float64(len(clusters)))
+	metrics.KubeClustersTotal.WithLabelValues(clusterName).Set(float64(len(clusters)))
 	c.log.V(1).Info("updated Kubernetes cluster metrics", "count", len(clusters))
 }
 
-func (c *Collector) updateDatabaseMetrics(_ string, databases []teleport.DatabaseInfo) {
+func (c *Collector) updateDatabaseMetrics(clusterName string, databases []teleport.DatabaseInfo) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -296,11 +296,11 @@ func (c *Collector) updateDatabaseMetrics(_ string, databases []teleport.Databas
 	}
 
 	c.lastDatabases = currentDatabases
-	metrics.DatabasesTotal.Set(float64(len(databases)))
+	metrics.DatabasesTotal.WithLabelValues(clusterName).Set(float64(len(databases)))
 	c.log.V(1).Info("updated database metrics", "count", len(databases))
 }
 
-func (c *Collector) updateAppMetrics(_ string, apps []teleport.AppInfo) {
+func (c *Collector) updateAppMetrics(clusterName string, apps []teleport.AppInfo) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
@@ -327,7 +327,7 @@ func (c *Collector) updateAppMetrics(_ string, apps []teleport.AppInfo) {
 	}
 
 	c.lastApps = currentApps
-	metrics.AppsTotal.Set(float64(len(apps)))
+	metrics.AppsTotal.WithLabelValues(clusterName).Set(float64(len(apps)))
 	c.log.V(1).Info("updated application metrics", "count", len(apps))
 }
 
