@@ -1,5 +1,5 @@
 # Build the exporter binary
-FROM golang:1.25.5 AS builder
+FROM golang:1.25.6 AS builder
 
 ARG VERSION=dev
 ARG COMMIT=unknown
