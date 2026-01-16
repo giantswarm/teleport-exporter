@@ -51,10 +51,11 @@ type Collector struct {
 
 	// Tracking for smart metric cleanup (avoid Reset() gaps)
 	mu                sync.RWMutex
-	lastNodes         map[string]struct{} // key: "nodeName|hostname|address|namespace|subkind"
+	lastNodes         map[string]struct{} // key: "subkind"
 	lastKubeClusters  map[string]struct{} // key: "kubeClusterName"
-	lastDatabases     map[string]struct{} // key: "dbName|protocol|type"
-	lastApps          map[string]struct{} // key: "appName|publicAddr"
+	lastDatabases     map[string]struct{} // key: "protocol|type"
+	lastApps          map[string]struct{} // key: "appName"
+	lastClusterName   string
 	consecutiveErrors int
 }
 
@@ -212,33 +213,32 @@ func (c *Collector) updateNodeMetrics(clusterName string, nodes []teleport.NodeI
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	// Build set of current nodes
-	currentNodes := make(map[string]struct{}, len(nodes))
-
+	// Count nodes by subkind
+	subkindCounts := make(map[string]int)
 	for _, node := range nodes {
-		key := node.Name + "|" + node.Hostname + "|" + node.Address + "|" + node.Namespace + "|" + node.SubKind
-		currentNodes[key] = struct{}{}
-		metrics.NodeInfo.WithLabelValues(
-			node.Name,
-			node.Hostname,
-			node.Address,
-			node.Namespace,
-			node.SubKind,
-		).Set(1)
+		subkind := node.SubKind
+		if subkind == "" {
+			subkind = "default"
+		}
+		subkindCounts[subkind]++
 	}
 
-	// Delete metrics for nodes that no longer exist (instead of Reset())
-	for key := range c.lastNodes {
-		if _, exists := currentNodes[key]; !exists {
-			// Parse the key to get label values
-			parts := splitKey(key, 5)
-			if len(parts) == 5 {
-				metrics.NodeInfo.DeleteLabelValues(parts[0], parts[1], parts[2], parts[3], parts[4])
-			}
+	// Build set of current subkinds and update metrics
+	currentNodes := make(map[string]struct{}, len(subkindCounts))
+	for subkind, count := range subkindCounts {
+		currentNodes[subkind] = struct{}{}
+		metrics.NodeInfo.WithLabelValues(clusterName, subkind).Set(float64(count))
+	}
+
+	// Delete metrics for subkinds that no longer exist
+	for subkind := range c.lastNodes {
+		if _, exists := currentNodes[subkind]; !exists {
+			metrics.NodeInfo.DeleteLabelValues(c.lastClusterName, subkind)
 		}
 	}
 
 	c.lastNodes = currentNodes
+	c.lastClusterName = clusterName
 	metrics.NodesTotal.WithLabelValues(clusterName).Set(float64(len(nodes)))
 	c.log.V(1).Info("updated node metrics", "count", len(nodes))
 }
@@ -251,19 +251,19 @@ func (c *Collector) updateKubeClusterMetrics(clusterName string, clusters []tele
 	currentClusters := make(map[string]struct{}, len(clusters))
 
 	for _, cluster := range clusters {
-		key := cluster.Name
-		currentClusters[key] = struct{}{}
-		metrics.KubeClusterInfo.WithLabelValues(cluster.Name).Set(1)
+		currentClusters[cluster.Name] = struct{}{}
+		metrics.KubeClusterInfo.WithLabelValues(clusterName, cluster.Name).Set(1)
 	}
 
 	// Delete metrics for clusters that no longer exist
-	for key := range c.lastKubeClusters {
-		if _, exists := currentClusters[key]; !exists {
-			metrics.KubeClusterInfo.DeleteLabelValues(key)
+	for kubeClusterName := range c.lastKubeClusters {
+		if _, exists := currentClusters[kubeClusterName]; !exists {
+			metrics.KubeClusterInfo.DeleteLabelValues(c.lastClusterName, kubeClusterName)
 		}
 	}
 
 	c.lastKubeClusters = currentClusters
+	c.lastClusterName = clusterName
 	metrics.KubeClustersTotal.WithLabelValues(clusterName).Set(float64(len(clusters)))
 	c.log.V(1).Info("updated Kubernetes cluster metrics", "count", len(clusters))
 }
@@ -272,30 +272,41 @@ func (c *Collector) updateDatabaseMetrics(clusterName string, databases []telepo
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	// Build set of current databases
-	currentDatabases := make(map[string]struct{}, len(databases))
-
+	// Count databases by protocol/type combination
+	dbCounts := make(map[string]int)
 	for _, db := range databases {
-		key := db.Name + "|" + db.Protocol + "|" + db.Type
-		currentDatabases[key] = struct{}{}
-		metrics.DatabaseInfo.WithLabelValues(
-			db.Name,
-			db.Protocol,
-			db.Type,
-		).Set(1)
+		protocol := db.Protocol
+		if protocol == "" {
+			protocol = "unknown"
+		}
+		dbType := db.Type
+		if dbType == "" {
+			dbType = "unknown"
+		}
+		key := protocol + "|" + dbType
+		dbCounts[key]++
 	}
 
-	// Delete metrics for databases that no longer exist
+	// Build set of current combinations and update metrics
+	currentDatabases := make(map[string]struct{}, len(dbCounts))
+	for key, count := range dbCounts {
+		currentDatabases[key] = struct{}{}
+		parts := splitKey(key, 2)
+		metrics.DatabaseInfo.WithLabelValues(clusterName, parts[0], parts[1]).Set(float64(count))
+	}
+
+	// Delete metrics for combinations that no longer exist
 	for key := range c.lastDatabases {
 		if _, exists := currentDatabases[key]; !exists {
-			parts := splitKey(key, 3)
-			if len(parts) == 3 {
-				metrics.DatabaseInfo.DeleteLabelValues(parts[0], parts[1], parts[2])
+			parts := splitKey(key, 2)
+			if len(parts) == 2 {
+				metrics.DatabaseInfo.DeleteLabelValues(c.lastClusterName, parts[0], parts[1])
 			}
 		}
 	}
 
 	c.lastDatabases = currentDatabases
+	c.lastClusterName = clusterName
 	metrics.DatabasesTotal.WithLabelValues(clusterName).Set(float64(len(databases)))
 	c.log.V(1).Info("updated database metrics", "count", len(databases))
 }
@@ -308,25 +319,19 @@ func (c *Collector) updateAppMetrics(clusterName string, apps []teleport.AppInfo
 	currentApps := make(map[string]struct{}, len(apps))
 
 	for _, app := range apps {
-		key := app.Name + "|" + app.PublicAddr
-		currentApps[key] = struct{}{}
-		metrics.AppInfo.WithLabelValues(
-			app.Name,
-			app.PublicAddr,
-		).Set(1)
+		currentApps[app.Name] = struct{}{}
+		metrics.AppInfo.WithLabelValues(clusterName, app.Name).Set(1)
 	}
 
 	// Delete metrics for apps that no longer exist
-	for key := range c.lastApps {
-		if _, exists := currentApps[key]; !exists {
-			parts := splitKey(key, 2)
-			if len(parts) == 2 {
-				metrics.AppInfo.DeleteLabelValues(parts[0], parts[1])
-			}
+	for appName := range c.lastApps {
+		if _, exists := currentApps[appName]; !exists {
+			metrics.AppInfo.DeleteLabelValues(c.lastClusterName, appName)
 		}
 	}
 
 	c.lastApps = currentApps
+	c.lastClusterName = clusterName
 	metrics.AppsTotal.WithLabelValues(clusterName).Set(float64(len(apps)))
 	c.log.V(1).Info("updated application metrics", "count", len(apps))
 }

@@ -46,7 +46,7 @@ var (
 		Namespace: namespace,
 		Name:      "node_info",
 		Help:      "Information about each node registered in Teleport. Value is always 1.",
-	}, []string{"node_name", "hostname", "address", "namespace", "subkind"})
+	}, []string{"cluster_name", "subkind"})
 
 	// KubeClustersTotal is the total number of Kubernetes clusters registered in Teleport.
 	KubeClustersTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
@@ -61,7 +61,7 @@ var (
 		Namespace: namespace,
 		Name:      "kubernetes_cluster_info",
 		Help:      "Information about each Kubernetes cluster registered in Teleport. Value is always 1.",
-	}, []string{"kube_cluster_name"})
+	}, []string{"cluster_name", "kube_cluster_name"})
 
 	// DatabasesTotal is the total number of databases registered in Teleport.
 	DatabasesTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
@@ -76,7 +76,7 @@ var (
 		Namespace: namespace,
 		Name:      "database_info",
 		Help:      "Information about each database registered in Teleport. Value is always 1.",
-	}, []string{"database_name", "protocol", "type"})
+	}, []string{"cluster_name", "protocol", "type"})
 
 	// AppsTotal is the total number of applications registered in Teleport.
 	AppsTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
@@ -91,7 +91,7 @@ var (
 		Namespace: namespace,
 		Name:      "app_info",
 		Help:      "Information about each application registered in Teleport. Value is always 1.",
-	}, []string{"app_name", "public_addr"})
+	}, []string{"cluster_name", "app_name"})
 
 	// CollectDuration tracks the duration of the last metrics collection.
 	CollectDuration = promauto.NewGauge(prometheus.GaugeOpts{
@@ -100,7 +100,7 @@ var (
 		Help:      "Duration of the last metrics collection in seconds.",
 	})
 
-	// CollectErrorsTotal counts the total number of collection errors.
+	// CollectErrorsTotal is the total number of errors encountered during metrics collection.
 	CollectErrorsTotal = promauto.NewCounter(prometheus.CounterOpts{
 		Namespace: namespace,
 		Name:      "collect_errors_total",
