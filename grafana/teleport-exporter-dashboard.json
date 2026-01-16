@@ -165,7 +165,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "teleport_exporter_nodes_total",
+          "expr": "sum(teleport_exporter_nodes_total)",
           "refId": "A"
         }
       ],
@@ -224,7 +224,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "teleport_exporter_kubernetes_clusters_total",
+          "expr": "sum(teleport_exporter_kubernetes_clusters_total)",
           "refId": "A"
         }
       ],
@@ -283,7 +283,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "teleport_exporter_databases_total",
+          "expr": "sum(teleport_exporter_databases_total)",
           "refId": "A"
         }
       ],
@@ -342,7 +342,7 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "teleport_exporter_apps_total",
+          "expr": "sum(teleport_exporter_apps_total)",
           "refId": "A"
         }
       ],
@@ -514,8 +514,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "teleport_exporter_nodes_total",
-          "legendFormat": "Nodes",
+          "expr": "sum by (cluster_name) (teleport_exporter_nodes_total)",
+          "legendFormat": "{{cluster_name}}",
           "refId": "A"
         }
       ],
@@ -607,8 +607,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "teleport_exporter_kubernetes_clusters_total",
-          "legendFormat": "Kubernetes Clusters",
+          "expr": "sum by (cluster_name) (teleport_exporter_kubernetes_clusters_total)",
+          "legendFormat": "{{cluster_name}}",
           "refId": "A"
         }
       ],
@@ -700,8 +700,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "teleport_exporter_apps_total",
-          "legendFormat": "Applications",
+          "expr": "sum by (cluster_name) (teleport_exporter_apps_total)",
+          "legendFormat": "Apps - {{cluster_name}}",
           "refId": "A"
         },
         {
@@ -709,8 +709,8 @@
             "type": "prometheus",
             "uid": "${datasource}"
           },
-          "expr": "teleport_exporter_databases_total",
-          "legendFormat": "Databases",
+          "expr": "sum by (cluster_name) (teleport_exporter_databases_total)",
+          "legendFormat": "DBs - {{cluster_name}}",
           "refId": "B"
         }
       ],
@@ -1012,24 +1012,6 @@
                 "value": true
               }
             ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Public Address"
-            },
-            "properties": [
-              {
-                "id": "links",
-                "value": [
-                  {
-                    "targetBlank": true,
-                    "title": "Open Application",
-                    "url": "https://${__data.fields[\"Public Address\"]}"
-                  }
-                ]
-              }
-            ]
           }
         ]
       },
@@ -1086,8 +1068,7 @@
             "indexByName": {},
             "renameByName": {
               "app_name": "Application Name",
-              "cluster_name": "Teleport Cluster",
-              "public_addr": "Public Address"
+              "cluster_name": "Teleport Cluster"
             }
           }
         }
@@ -1160,7 +1141,7 @@
             ]
           },
           "gridPos": {
-            "h": 15,
+            "h": 8,
             "w": 24,
             "x": 0,
             "y": 45
@@ -1180,7 +1161,7 @@
             "sortBy": [
               {
                 "desc": false,
-                "displayName": "Node Name"
+                "displayName": "Subkind"
               }
             ]
           },
@@ -1191,31 +1172,27 @@
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "teleport_exporter_node_info",
+              "expr": "count by (cluster_name, subkind) (teleport_exporter_node_info)",
               "format": "table",
               "instant": true,
               "refId": "A"
             }
           ],
-          "title": "SSH Nodes List",
+          "title": "SSH Nodes by Subkind",
           "transformations": [
             {
               "id": "organize",
               "options": {
                 "excludeByName": {
                   "Time": true,
-                  "Value": true,
                   "__name__": true,
                   "instance": true,
                   "job": true
                 },
                 "indexByName": {},
                 "renameByName": {
-                  "address": "Address",
+                  "Value": "Count",
                   "cluster_name": "Teleport Cluster",
-                  "hostname": "Hostname",
-                  "namespace": "Namespace",
-                  "node_name": "Node Name",
                   "subkind": "Subkind"
                 }
               }
@@ -1224,7 +1201,7 @@
           "type": "table"
         }
       ],
-      "title": "SSH Nodes (collapsed by default - large dataset)",
+      "title": "SSH Nodes by Subkind",
       "type": "row"
     },
     {
@@ -1293,7 +1270,7 @@
             ]
           },
           "gridPos": {
-            "h": 10,
+            "h": 8,
             "w": 24,
             "x": 0,
             "y": 46
@@ -1313,7 +1290,7 @@
             "sortBy": [
               {
                 "desc": false,
-                "displayName": "Database Name"
+                "displayName": "Type"
               }
             ]
           },
@@ -1324,28 +1301,27 @@
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "teleport_exporter_database_info",
+              "expr": "count by (cluster_name, protocol, type) (teleport_exporter_database_info)",
               "format": "table",
               "instant": true,
               "refId": "A"
             }
           ],
-          "title": "Databases List",
+          "title": "Databases by Type/Protocol",
           "transformations": [
             {
               "id": "organize",
               "options": {
                 "excludeByName": {
                   "Time": true,
-                  "Value": true,
                   "__name__": true,
                   "instance": true,
                   "job": true
                 },
                 "indexByName": {},
                 "renameByName": {
+                  "Value": "Count",
                   "cluster_name": "Teleport Cluster",
-                  "database_name": "Database Name",
                   "protocol": "Protocol",
                   "type": "Type"
                 }
@@ -1355,7 +1331,7 @@
           "type": "table"
         }
       ],
-      "title": "Databases",
+      "title": "Databases by Type/Protocol",
       "type": "row"
     }
   ],
