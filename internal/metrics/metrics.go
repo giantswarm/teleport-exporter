@@ -100,6 +100,13 @@ var (
 		Help:      "Duration of the last metrics collection in seconds.",
 	})
 
+	// CollectErrorsTotal is the total number of errors encountered during metrics collection.
+	CollectErrorsTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Name:      "collect_errors_total",
+		Help:      "Total number of errors encountered during metrics collection.",
+	})
+
 	// LastSuccessfulCollectTime is the timestamp of the last successful collection.
 	LastSuccessfulCollectTime = promauto.NewGauge(prometheus.GaugeOpts{
 		Namespace: namespace,

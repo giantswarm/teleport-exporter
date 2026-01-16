@@ -135,6 +135,7 @@ func (c *Collector) collect(ctx context.Context) {
 	if err != nil {
 		c.log.Error(err, "failed to get cluster name")
 		metrics.TeleportUp.Set(0)
+		metrics.CollectErrorsTotal.Inc()
 		c.incrementErrors()
 		return
 	}
@@ -145,6 +146,7 @@ func (c *Collector) collect(ctx context.Context) {
 	nodes, err := c.client.GetNodes(ctx)
 	if err != nil {
 		c.log.Error(err, "failed to get nodes")
+		metrics.CollectErrorsTotal.Inc()
 		hadErrors = true
 	} else {
 		c.updateNodeMetrics(clusterName, nodes)
@@ -154,6 +156,7 @@ func (c *Collector) collect(ctx context.Context) {
 	kubeClusters, err := c.client.GetKubeClusters(ctx)
 	if err != nil {
 		c.log.Error(err, "failed to get Kubernetes clusters")
+		metrics.CollectErrorsTotal.Inc()
 		hadErrors = true
 	} else {
 		c.updateKubeClusterMetrics(clusterName, kubeClusters)
@@ -163,6 +166,7 @@ func (c *Collector) collect(ctx context.Context) {
 	databases, err := c.client.GetDatabases(ctx)
 	if err != nil {
 		c.log.Error(err, "failed to get databases")
+		metrics.CollectErrorsTotal.Inc()
 		hadErrors = true
 	} else {
 		c.updateDatabaseMetrics(clusterName, databases)
@@ -172,6 +176,7 @@ func (c *Collector) collect(ctx context.Context) {
 	apps, err := c.client.GetApps(ctx)
 	if err != nil {
 		c.log.Error(err, "failed to get applications")
+		metrics.CollectErrorsTotal.Inc()
 		hadErrors = true
 	} else {
 		c.updateAppMetrics(clusterName, apps)

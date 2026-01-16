@@ -101,3 +101,22 @@ func TestAppsTotal(t *testing.T) {
 		t.Errorf("expected AppsTotal to be 7, got %f", value)
 	}
 }
+
+func TestCollectErrorsTotal(t *testing.T) {
+	// Get initial value
+	initialValue := testutil.ToFloat64(CollectErrorsTotal)
+
+	// Increment and verify
+	CollectErrorsTotal.Inc()
+	value := testutil.ToFloat64(CollectErrorsTotal)
+	if value != initialValue+1 {
+		t.Errorf("expected CollectErrorsTotal to be %f, got %f", initialValue+1, value)
+	}
+
+	// Increment again
+	CollectErrorsTotal.Inc()
+	value = testutil.ToFloat64(CollectErrorsTotal)
+	if value != initialValue+2 {
+		t.Errorf("expected CollectErrorsTotal to be %f, got %f", initialValue+2, value)
+	}
+}
