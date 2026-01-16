@@ -47,18 +47,6 @@ func TestNodesTotal(t *testing.T) {
 	}
 }
 
-func TestCollectErrorsTotal(t *testing.T) {
-	// Test that error counter increments correctly
-	initialValue := testutil.ToFloat64(CollectErrorsTotal)
-
-	CollectErrorsTotal.Inc()
-
-	newValue := testutil.ToFloat64(CollectErrorsTotal)
-	if newValue != initialValue+1 {
-		t.Errorf("expected CollectErrorsTotal to increment by 1, got %f", newValue-initialValue)
-	}
-}
-
 func TestCollectDuration(t *testing.T) {
 	// Test that gauge can be set
 	CollectDuration.Set(0.5)
