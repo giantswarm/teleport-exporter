@@ -69,53 +69,45 @@ func TestCollector_UpdateNodeMetrics(t *testing.T) {
 		t.Errorf("expected NodesTotal to be 2, got %f", totalValue)
 	}
 
-	// Verify node info metrics exist
-	nodeInfoValue := testutil.ToFloat64(metrics.NodeInfo.WithLabelValues(
-		"node-1", "host1.example.com", "192.168.1.1:3022", "default", "openssh",
-	))
-	if nodeInfoValue != 1 {
-		t.Errorf("expected NodeInfo for node-1 to be 1, got %f", nodeInfoValue)
+	// Verify node info by subkind (aggregated)
+	opensshValue := testutil.ToFloat64(metrics.NodeInfo.WithLabelValues("test-cluster", "openssh"))
+	if opensshValue != 1 {
+		t.Errorf("expected NodeInfo for openssh to be 1, got %f", opensshValue)
 	}
 
-	// Verify that tracking map is updated
+	// Verify that tracking map has 2 subkinds
 	if len(c.lastNodes) != 2 {
 		t.Errorf("expected lastNodes to have 2 entries, got %d", len(c.lastNodes))
 	}
 }
 
-func TestCollector_UpdateNodeMetrics_RemovesStaleNodes(t *testing.T) {
+func TestCollector_UpdateNodeMetrics_RemovesStaleSubkinds(t *testing.T) {
 	// Reset metrics before test
 	metrics.NodeInfo.Reset()
 
 	c := newTestCollector()
 
-	// First update with 2 nodes
+	// First update with 2 subkinds
 	nodes := []teleport.NodeInfo{
 		{Name: "node-1", Hostname: "host1", Address: "1.1.1.1", Namespace: "default", SubKind: "teleport"},
-		{Name: "node-2", Hostname: "host2", Address: "2.2.2.2", Namespace: "default", SubKind: "teleport"},
+		{Name: "node-2", Hostname: "host2", Address: "2.2.2.2", Namespace: "default", SubKind: "openssh"},
 	}
 	c.updateNodeMetrics("test-cluster", nodes)
 
-	// Verify both nodes exist
-	if testutil.ToFloat64(metrics.NodesTotal.WithLabelValues("test-cluster")) != 2 {
-		t.Error("expected 2 nodes after first update")
+	// Verify 2 subkinds tracked
+	if len(c.lastNodes) != 2 {
+		t.Errorf("expected 2 subkinds after first update, got %d", len(c.lastNodes))
 	}
 
-	// Second update with only 1 node (node-2 removed)
+	// Second update with only teleport subkind (openssh removed)
 	nodes = []teleport.NodeInfo{
 		{Name: "node-1", Hostname: "host1", Address: "1.1.1.1", Namespace: "default", SubKind: "teleport"},
 	}
 	c.updateNodeMetrics("test-cluster", nodes)
 
-	// Verify only 1 node exists
-	totalValue := testutil.ToFloat64(metrics.NodesTotal.WithLabelValues("test-cluster"))
-	if totalValue != 1 {
-		t.Errorf("expected NodesTotal to be 1 after removal, got %f", totalValue)
-	}
-
-	// Verify tracking map is updated
+	// Verify only 1 subkind tracked
 	if len(c.lastNodes) != 1 {
-		t.Errorf("expected lastNodes to have 1 entry after removal, got %d", len(c.lastNodes))
+		t.Errorf("expected 1 subkind after removal, got %d", len(c.lastNodes))
 	}
 }
 
@@ -137,6 +129,12 @@ func TestCollector_UpdateKubeClusterMetrics(t *testing.T) {
 	totalValue := testutil.ToFloat64(metrics.KubeClustersTotal.WithLabelValues("test-cluster"))
 	if totalValue != 3 {
 		t.Errorf("expected KubeClustersTotal to be 3, got %f", totalValue)
+	}
+
+	// Verify individual cluster info (now with cluster_name)
+	clusterInfoValue := testutil.ToFloat64(metrics.KubeClusterInfo.WithLabelValues("test-cluster", "kube-cluster-1"))
+	if clusterInfoValue != 1 {
+		t.Errorf("expected KubeClusterInfo for kube-cluster-1 to be 1, got %f", clusterInfoValue)
 	}
 
 	// Verify tracking map
@@ -172,12 +170,10 @@ func TestCollector_UpdateDatabaseMetrics(t *testing.T) {
 		t.Errorf("expected DatabasesTotal to be 2, got %f", totalValue)
 	}
 
-	// Verify database info
-	dbInfoValue := testutil.ToFloat64(metrics.DatabaseInfo.WithLabelValues(
-		"postgres-db", "postgres", "rds",
-	))
+	// Verify database info by protocol/type (now aggregated with cluster_name)
+	dbInfoValue := testutil.ToFloat64(metrics.DatabaseInfo.WithLabelValues("test-cluster", "postgres", "rds"))
 	if dbInfoValue != 1 {
-		t.Errorf("expected DatabaseInfo for postgres-db to be 1, got %f", dbInfoValue)
+		t.Errorf("expected DatabaseInfo for postgres/rds to be 1, got %f", dbInfoValue)
 	}
 }
 
@@ -201,6 +197,12 @@ func TestCollector_UpdateAppMetrics(t *testing.T) {
 	totalValue := testutil.ToFloat64(metrics.AppsTotal.WithLabelValues("test-cluster"))
 	if totalValue != 1 {
 		t.Errorf("expected AppsTotal to be 1, got %f", totalValue)
+	}
+
+	// Verify app info (now with cluster_name, app_name)
+	appInfoValue := testutil.ToFloat64(metrics.AppInfo.WithLabelValues("test-cluster", "grafana"))
+	if appInfoValue != 1 {
+		t.Errorf("expected AppInfo for grafana to be 1, got %f", appInfoValue)
 	}
 }
 
