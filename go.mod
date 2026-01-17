@@ -1,11 +1,11 @@
 module github.com/giantswarm/teleport-exporter
 
-go 1.25.5
+go 1.25.6
 
 require (
 	github.com/go-logr/logr v1.4.3
 	github.com/go-logr/zapr v1.3.0
-	github.com/gravitational/teleport/api v0.0.0-20260108110137-0f9658ad13d8
+	github.com/gravitational/teleport/api v0.0.0-20260116220117-f1ad945490e4
 	github.com/prometheus/client_golang v1.23.2
 	go.uber.org/zap v1.27.1
 )
