@@ -54,409 +54,6 @@
         "x": 0,
         "y": 0
       },
-      "id": 200,
-      "panels": [],
-      "title": "Environment Overview",
-      "type": "row"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "Quick overview of all environments - click on a job to filter",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "align": "center",
-            "cellOptions": {
-              "type": "auto"
-            },
-            "filterable": false,
-            "inspect": false
-          },
-          "mappings": [
-            {
-              "options": {
-                "0": {
-                  "color": "dark-red",
-                  "index": 1,
-                  "text": "DOWN"
-                },
-                "1": {
-                  "color": "dark-green",
-                  "index": 0,
-                  "text": "UP"
-                }
-              },
-              "type": "value"
-            }
-          ],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "dark-red",
-                "value": null
-              },
-              {
-                "color": "dark-green",
-                "value": 1
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Status"
-            },
-            "properties": [
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "mode": "basic",
-                  "type": "color-background"
-                }
-              },
-              {
-                "id": "custom.width",
-                "value": 100
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Environment"
-            },
-            "properties": [
-              {
-                "id": "links",
-                "value": [
-                  {
-                    "title": "Filter to ${__data.fields.Environment}",
-                    "url": "/d/teleport-exporter?var-cluster_id=${__data.fields.Environment}&${__url_time_range}"
-                  }
-                ]
-              },
-              {
-                "id": "custom.cellOptions",
-                "value": {
-                  "type": "color-text"
-                }
-              },
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "light-blue",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Time"
-            },
-            "properties": [
-              {
-                "id": "custom.hidden",
-                "value": true
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 8,
-        "x": 0,
-        "y": 1
-      },
-      "id": 201,
-      "options": {
-        "cellHeight": "sm",
-        "footer": {
-          "countRows": false,
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
-        },
-        "showHeader": true,
-        "sortBy": [
-          {
-            "desc": false,
-            "displayName": "Environment"
-          }
-        ]
-      },
-      "pluginVersion": "11.0.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "teleport_exporter_up",
-          "format": "table",
-          "instant": true,
-          "legendFormat": "__auto",
-          "range": false,
-          "refId": "A"
-        }
-      ],
-      "title": "All Environments Status",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {
-              "Time": true,
-              "__name__": true,
-              "cluster_name": true,
-              "instance": true,
-              "job": true
-            },
-            "includeByName": {},
-            "indexByName": {
-              "Time": 0,
-              "Value": 4,
-              "__name__": 1,
-              "cluster_name": 3,
-              "instance": 2,
-              "cluster_id": 5
-            },
-            "renameByName": {
-              "Value": "Status",
-              "cluster_id": "Environment"
-            }
-          }
-        }
-      ],
-      "type": "table"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "${datasource}"
-      },
-      "description": "Resource counts per environment/job",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "barWidthFactor": 0.6,
-            "drawStyle": "bars",
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "insertNulls": false,
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "group": "A",
-              "mode": "normal"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "none"
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "SSH Nodes"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "blue",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Kubernetes"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "purple",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Databases"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "orange",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Applications"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "green",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 16,
-        "x": 8,
-        "y": 1
-      },
-      "id": 202,
-      "options": {
-        "barRadius": 0.1,
-        "barWidth": 0.8,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "right",
-          "showLegend": true
-        },
-        "orientation": "horizontal",
-        "showValue": "auto",
-        "stacking": "normal",
-        "tooltip": {
-          "mode": "multi",
-          "sort": "desc"
-        },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
-      },
-      "pluginVersion": "11.0.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum(teleport_exporter_nodes_total) by (cluster_id)",
-          "instant": true,
-          "legendFormat": "SSH Nodes",
-          "range": false,
-          "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum(teleport_exporter_kubernetes_clusters_total) by (cluster_id)",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "Kubernetes",
-          "range": false,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum(teleport_exporter_databases_total) by (cluster_id)",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "Databases",
-          "range": false,
-          "refId": "C"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "${datasource}"
-          },
-          "editorMode": "code",
-          "expr": "sum(teleport_exporter_apps_total) by (cluster_id)",
-          "hide": false,
-          "instant": true,
-          "legendFormat": "Applications",
-          "range": false,
-          "refId": "D"
-        }
-      ],
-      "title": "Resources by Environment",
-      "type": "barchart"
-    },
-    {
-      "collapsed": false,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 6
-      },
       "id": 100,
       "panels": [],
       "title": "Health & Status",
@@ -508,9 +105,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
+        "w": 4,
         "x": 0,
-        "y": 7
+        "y": 1
       },
       "id": 1,
       "options": {
@@ -538,7 +135,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "teleport_exporter_up{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"}",
+          "expr": "teleport_exporter_up{cluster_name=~\"$cluster\"}",
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
@@ -587,9 +184,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
-        "x": 3,
-        "y": 7
+        "w": 4,
+        "x": 4,
+        "y": 1
       },
       "id": 2,
       "options": {
@@ -617,7 +214,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "time() - teleport_exporter_last_successful_collect_timestamp_seconds{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"}",
+          "expr": "time() - teleport_exporter_last_successful_collect_timestamp_seconds",
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
@@ -662,9 +259,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
-        "x": 6,
-        "y": 7
+        "w": 4,
+        "x": 8,
+        "y": 1
       },
       "id": 3,
       "options": {
@@ -692,7 +289,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "teleport_exporter_collect_duration_seconds{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"}",
+          "expr": "teleport_exporter_collect_duration_seconds",
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
@@ -737,9 +334,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 3,
-        "x": 9,
-        "y": 7
+        "w": 4,
+        "x": 12,
+        "y": 1
       },
       "id": 4,
       "options": {
@@ -767,7 +364,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(increase(teleport_exporter_collect_errors_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"}[$__range])) or vector(0)",
+          "expr": "increase(teleport_exporter_collect_errors_total[$__range]) or vector(0)",
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
@@ -782,7 +379,7 @@
         "type": "prometheus",
         "uid": "${datasource}"
       },
-      "description": "Teleport cluster name",
+      "description": "Teleport cluster name from metrics",
       "fieldConfig": {
         "defaults": {
           "color": {
@@ -803,9 +400,9 @@
       },
       "gridPos": {
         "h": 4,
-        "w": 12,
-        "x": 12,
-        "y": 7
+        "w": 8,
+        "x": 16,
+        "y": 1
       },
       "id": 6,
       "options": {
@@ -833,7 +430,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "teleport_exporter_nodes_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"}",
+          "expr": "teleport_exporter_nodes_total{cluster_name=~\"$cluster\"}",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -867,7 +464,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 11
+        "y": 5
       },
       "id": 101,
       "panels": [],
@@ -903,7 +500,7 @@
         "h": 5,
         "w": 6,
         "x": 0,
-        "y": 12
+        "y": 6
       },
       "id": 10,
       "options": {
@@ -931,7 +528,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(teleport_exporter_nodes_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"})",
+          "expr": "sum(teleport_exporter_nodes_total{cluster_name=~\"$cluster\"})",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -969,7 +566,7 @@
         "h": 5,
         "w": 6,
         "x": 6,
-        "y": 12
+        "y": 6
       },
       "id": 11,
       "options": {
@@ -997,7 +594,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(teleport_exporter_kubernetes_clusters_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"})",
+          "expr": "sum(teleport_exporter_kubernetes_clusters_total{cluster_name=~\"$cluster\"})",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -1035,7 +632,7 @@
         "h": 5,
         "w": 6,
         "x": 12,
-        "y": 12
+        "y": 6
       },
       "id": 12,
       "options": {
@@ -1063,7 +660,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(teleport_exporter_databases_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"})",
+          "expr": "sum(teleport_exporter_databases_total{cluster_name=~\"$cluster\"})",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -1101,7 +698,7 @@
         "h": 5,
         "w": 6,
         "x": 18,
-        "y": 12
+        "y": 6
       },
       "id": 13,
       "options": {
@@ -1129,7 +726,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(teleport_exporter_apps_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"})",
+          "expr": "sum(teleport_exporter_apps_total{cluster_name=~\"$cluster\"})",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -1144,7 +741,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 17
+        "y": 11
       },
       "id": 102,
       "panels": [],
@@ -1275,7 +872,7 @@
         "h": 8,
         "w": 16,
         "x": 0,
-        "y": 18
+        "y": 12
       },
       "id": 20,
       "options": {
@@ -1303,7 +900,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(teleport_exporter_nodes_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"})",
+          "expr": "sum(teleport_exporter_nodes_total{cluster_name=~\"$cluster\"})",
           "legendFormat": "SSH Nodes",
           "range": true,
           "refId": "A"
@@ -1314,7 +911,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(teleport_exporter_kubernetes_clusters_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"})",
+          "expr": "sum(teleport_exporter_kubernetes_clusters_total{cluster_name=~\"$cluster\"})",
           "hide": false,
           "legendFormat": "Kubernetes Clusters",
           "range": true,
@@ -1326,7 +923,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(teleport_exporter_databases_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"})",
+          "expr": "sum(teleport_exporter_databases_total{cluster_name=~\"$cluster\"})",
           "hide": false,
           "legendFormat": "Databases",
           "range": true,
@@ -1338,7 +935,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(teleport_exporter_apps_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"})",
+          "expr": "sum(teleport_exporter_apps_total{cluster_name=~\"$cluster\"})",
           "hide": false,
           "legendFormat": "Applications",
           "range": true,
@@ -1435,7 +1032,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 18
+        "y": 12
       },
       "id": 21,
       "options": {
@@ -1473,7 +1070,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(teleport_exporter_nodes_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"})",
+          "expr": "sum(teleport_exporter_nodes_total{cluster_name=~\"$cluster\"})",
           "instant": true,
           "legendFormat": "SSH Nodes",
           "range": false,
@@ -1485,7 +1082,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(teleport_exporter_kubernetes_clusters_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"})",
+          "expr": "sum(teleport_exporter_kubernetes_clusters_total{cluster_name=~\"$cluster\"})",
           "hide": false,
           "instant": true,
           "legendFormat": "Kubernetes Clusters",
@@ -1498,7 +1095,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(teleport_exporter_databases_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"})",
+          "expr": "sum(teleport_exporter_databases_total{cluster_name=~\"$cluster\"})",
           "hide": false,
           "instant": true,
           "legendFormat": "Databases",
@@ -1511,7 +1108,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(teleport_exporter_apps_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"})",
+          "expr": "sum(teleport_exporter_apps_total{cluster_name=~\"$cluster\"})",
           "hide": false,
           "instant": true,
           "legendFormat": "Applications",
@@ -1528,7 +1125,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 26
+        "y": 20
       },
       "id": 103,
       "panels": [],
@@ -1618,7 +1215,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 27
+        "y": 21
       },
       "id": 30,
       "options": {
@@ -1645,7 +1242,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "teleport_exporter_collect_duration_seconds{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"}",
+          "expr": "teleport_exporter_collect_duration_seconds",
           "legendFormat": "Collection Duration",
           "range": true,
           "refId": "A"
@@ -1733,7 +1330,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 27
+        "y": 21
       },
       "id": 31,
       "options": {
@@ -1758,7 +1355,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "increase(teleport_exporter_collect_errors_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"}[$__rate_interval])",
+          "expr": "increase(teleport_exporter_collect_errors_total[$__rate_interval])",
           "legendFormat": "Errors",
           "range": true,
           "refId": "A"
@@ -1773,7 +1370,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 35
+        "y": 29
       },
       "id": 104,
       "panels": [],
@@ -1859,7 +1456,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 36
+        "y": 30
       },
       "id": 40,
       "options": {
@@ -1886,7 +1483,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(teleport_exporter_kubernetes_clusters_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"})",
+          "expr": "sum(teleport_exporter_kubernetes_clusters_total{cluster_name=~\"$cluster\"})",
           "legendFormat": "Total Kubernetes Clusters",
           "range": true,
           "refId": "A"
@@ -1968,7 +1565,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 36
+        "y": 30
       },
       "id": 41,
       "options": {
@@ -1997,7 +1594,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "teleport_exporter_kubernetes_cluster_info{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"}",
+          "expr": "teleport_exporter_kubernetes_cluster_info{cluster_name=~\"$cluster\"}",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -2034,7 +1631,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 38
       },
       "id": 105,
       "panels": [],
@@ -2120,7 +1717,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 45
+        "y": 39
       },
       "id": 50,
       "options": {
@@ -2147,7 +1744,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(teleport_exporter_apps_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"})",
+          "expr": "sum(teleport_exporter_apps_total{cluster_name=~\"$cluster\"})",
           "legendFormat": "Total Applications",
           "range": true,
           "refId": "A"
@@ -2217,7 +1814,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 45
+        "y": 39
       },
       "id": 51,
       "options": {
@@ -2246,7 +1843,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "teleport_exporter_app_info{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"}",
+          "expr": "teleport_exporter_app_info{cluster_name=~\"$cluster\"}",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -2283,7 +1880,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 53
+        "y": 47
       },
       "id": 106,
       "panels": [],
@@ -2369,7 +1966,7 @@
         "h": 8,
         "w": 8,
         "x": 0,
-        "y": 54
+        "y": 48
       },
       "id": 60,
       "options": {
@@ -2396,7 +1993,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(teleport_exporter_databases_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"})",
+          "expr": "sum(teleport_exporter_databases_total{cluster_name=~\"$cluster\"})",
           "legendFormat": "Total Databases",
           "range": true,
           "refId": "A"
@@ -2431,7 +2028,7 @@
         "h": 8,
         "w": 8,
         "x": 8,
-        "y": 54
+        "y": 48
       },
       "id": 61,
       "options": {
@@ -2469,7 +2066,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(teleport_exporter_database_info{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"}) by (protocol)",
+          "expr": "sum by (protocol) (teleport_exporter_database_info{cluster_name=~\"$cluster\"})",
           "instant": true,
           "legendFormat": "{{protocol}}",
           "range": false,
@@ -2505,7 +2102,7 @@
         "h": 8,
         "w": 8,
         "x": 16,
-        "y": 54
+        "y": 48
       },
       "id": 62,
       "options": {
@@ -2543,7 +2140,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum(teleport_exporter_database_info{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"}) by (type)",
+          "expr": "sum by (type) (teleport_exporter_database_info{cluster_name=~\"$cluster\"})",
           "instant": true,
           "legendFormat": "{{type}}",
           "range": false,
@@ -2658,16 +2255,16 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 62
+        "y": 56
       },
       "id": 63,
       "options": {
         "cellHeight": "sm",
         "footer": {
-          "countRows": true,
-          "fields": "",
+          "countRows": false,
+          "fields": "Count",
           "reducer": [
-            "count"
+            "sum"
           ],
           "show": true
         },
@@ -2687,7 +2284,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "teleport_exporter_database_info{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"}",
+          "expr": "teleport_exporter_database_info{cluster_name=~\"$cluster\"}",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -2725,7 +2322,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 70
+        "y": 64
       },
       "id": 107,
       "panels": [
@@ -2807,7 +2404,7 @@
             "h": 8,
             "w": 8,
             "x": 0,
-            "y": 71
+            "y": 65
           },
           "id": 70,
           "options": {
@@ -2834,7 +2431,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum(teleport_exporter_nodes_total{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"})",
+              "expr": "sum(teleport_exporter_nodes_total{cluster_name=~\"$cluster\"})",
               "legendFormat": "Total SSH Nodes",
               "range": true,
               "refId": "A"
@@ -2869,7 +2466,7 @@
             "h": 8,
             "w": 8,
             "x": 8,
-            "y": 71
+            "y": 65
           },
           "id": 71,
           "options": {
@@ -2907,7 +2504,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "sum(teleport_exporter_node_info{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"}) by (subkind)",
+              "expr": "sum by (subkind) (teleport_exporter_node_info{cluster_name=~\"$cluster\"})",
               "instant": true,
               "legendFormat": "{{subkind}}",
               "range": false,
@@ -3012,16 +2609,16 @@
             "h": 8,
             "w": 8,
             "x": 16,
-            "y": 71
+            "y": 65
           },
           "id": 73,
           "options": {
             "cellHeight": "sm",
             "footer": {
-              "countRows": true,
-              "fields": "",
+              "countRows": false,
+              "fields": "Count",
               "reducer": [
-                "count"
+                "sum"
               ],
               "show": true
             },
@@ -3041,7 +2638,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "teleport_exporter_node_info{cluster_id=~\"$cluster_id\", cluster_name=~\"$cluster\"}",
+              "expr": "teleport_exporter_node_info{cluster_name=~\"$cluster\"}",
               "format": "table",
               "instant": true,
               "legendFormat": "__auto",
@@ -3117,37 +2714,7 @@
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "label_values(teleport_exporter_up, cluster_id)",
-        "description": "Filter by environment (prod, test) - from Prometheus external labels",
-        "hide": 0,
-        "includeAll": true,
-        "label": "Environment",
-        "multi": true,
-        "name": "cluster_id",
-        "options": [],
-        "query": {
-          "qryType": 1,
-          "query": "label_values(teleport_exporter_up, cluster_id)",
-          "refId": "PrometheusVariableQueryEditor-VariableQuery"
-        },
-        "refresh": 2,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 1,
-        "type": "query"
-      },
-      {
-        "allValue": ".*",
-        "current": {
-          "selected": true,
-          "text": "All",
-          "value": "$__all"
-        },
-        "datasource": {
-          "type": "prometheus",
-          "uid": "${datasource}"
-        },
-        "definition": "label_values(teleport_exporter_nodes_total{cluster_id=~\"$cluster_id\"}, cluster_name)",
+        "definition": "label_values(teleport_exporter_nodes_total, cluster_name)",
         "description": "Filter by Teleport cluster name",
         "hide": 0,
         "includeAll": true,
@@ -3157,7 +2724,7 @@
         "options": [],
         "query": {
           "qryType": 1,
-          "query": "label_values(teleport_exporter_nodes_total{cluster_id=~\"$cluster_id\"}, cluster_name)",
+          "query": "label_values(teleport_exporter_nodes_total, cluster_name)",
           "refId": "PrometheusVariableQueryEditor-VariableQuery"
         },
         "refresh": 2,
