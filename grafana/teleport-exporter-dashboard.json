@@ -1117,18 +1117,6 @@
               {
                 "matcher": {
                   "id": "byName",
-                  "options": "Value"
-                },
-                "properties": [
-                  {
-                    "id": "custom.hidden",
-                    "value": true
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
                   "options": "Time"
                 },
                 "properties": [
@@ -1172,7 +1160,7 @@
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "count by (cluster_name, subkind) (teleport_exporter_node_info)",
+              "expr": "teleport_exporter_node_info",
               "format": "table",
               "instant": true,
               "refId": "A"
@@ -1246,18 +1234,6 @@
               {
                 "matcher": {
                   "id": "byName",
-                  "options": "Value"
-                },
-                "properties": [
-                  {
-                    "id": "custom.hidden",
-                    "value": true
-                  }
-                ]
-              },
-              {
-                "matcher": {
-                  "id": "byName",
                   "options": "Time"
                 },
                 "properties": [
@@ -1301,7 +1277,7 @@
                 "type": "prometheus",
                 "uid": "${datasource}"
               },
-              "expr": "count by (cluster_name, protocol, type) (teleport_exporter_database_info)",
+              "expr": "teleport_exporter_database_info",
               "format": "table",
               "instant": true,
               "refId": "A"
