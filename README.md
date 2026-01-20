@@ -16,43 +16,62 @@ The teleport-exporter connects to a Teleport cluster and periodically collects i
 
 ## Metrics
 
-The exporter exposes the following metrics:
+The exporter exposes two types of metrics:
 
-### General Metrics
+1. **Remote-storage safe metrics** - Low cardinality, safe for Grafana Cloud and other remote storage
+2. **Local-only metrics** - High cardinality (prefixed with `local_`), should be dropped before remote_write
 
-| Metric | Description | Labels |
-|--------|-------------|--------|
-| `teleport_exporter_up` | Whether the exporter can successfully connect to Teleport (1 = connected, 0 = disconnected) | - |
-| `teleport_exporter_cluster_info` | Information about the Teleport cluster | `cluster_name` |
-| `teleport_exporter_collect_duration_seconds` | Duration of the last metrics collection in seconds | - |
-
-### Node Metrics
+### Remote-Storage Safe Metrics
 
 | Metric | Description | Labels |
 |--------|-------------|--------|
-| `teleport_exporter_nodes_total` | Total number of nodes registered in the Teleport cluster | `cluster_name` |
-| `teleport_exporter_node_info` | Information about each node registered in Teleport | `cluster_name`, `node_name`, `hostname`, `address`, `namespace`, `subkind` |
+| `teleport_exporter_up` | Connection status to Teleport (1 = connected, 0 = disconnected) | - |
+| `teleport_exporter_nodes_total` | Total number of SSH nodes | `cluster_name` |
+| `teleport_exporter_kubernetes_clusters_total` | Total number of Kubernetes clusters | `cluster_name` |
+| `teleport_exporter_databases_total` | Total number of databases | `cluster_name` |
+| `teleport_exporter_apps_total` | Total number of applications | `cluster_name` |
+| `teleport_exporter_collect_duration_seconds` | Duration of last metrics collection | - |
+| `teleport_exporter_collect_errors_total` | Total collection errors | - |
+| `teleport_exporter_last_successful_collect_timestamp_seconds` | Unix timestamp of last successful collection | - |
 
-### Kubernetes Cluster Metrics
+### Local-Only Metrics (High Cardinality)
 
-| Metric | Description | Labels |
-|--------|-------------|--------|
-| `teleport_exporter_kubernetes_clusters_total` | Total number of Kubernetes clusters registered in the Teleport cluster | `cluster_name` |
-| `teleport_exporter_kubernetes_cluster_info` | Information about each Kubernetes cluster registered in Teleport | `cluster_name`, `kube_cluster_name` |
+These metrics have `local_` in the name and should be dropped before sending to remote storage:
 
-### Database Metrics
+| Metric | Description | Labels | Cardinality |
+|--------|-------------|--------|-------------|
+| `teleport_exporter_local_nodes_by_kubernetes_cluster` | SSH nodes per Kubernetes cluster | `cluster_name`, `kube_cluster` | High |
+| `teleport_exporter_local_kubernetes_cluster_info` | Individual Kubernetes cluster info | `cluster_name`, `kube_cluster_name` | High |
+| `teleport_exporter_local_database_info` | Databases by protocol/type | `cluster_name`, `protocol`, `type` | Medium |
+| `teleport_exporter_local_app_info` | Individual application info | `cluster_name`, `app_name` | High |
 
-| Metric | Description | Labels |
-|--------|-------------|--------|
-| `teleport_exporter_databases_total` | Total number of databases registered in the Teleport cluster | `cluster_name` |
-| `teleport_exporter_database_info` | Information about each database registered in Teleport | `cluster_name`, `database_name`, `protocol`, `type` |
+### Filtering High-Cardinality Metrics for Remote Storage
 
-### Application Metrics
+When using Grafana Cloud or other remote storage, drop high-cardinality metrics using relabeling:
 
-| Metric | Description | Labels |
-|--------|-------------|--------|
-| `teleport_exporter_apps_total` | Total number of applications registered in the Teleport cluster | `cluster_name` |
-| `teleport_exporter_app_info` | Information about each application registered in Teleport | `cluster_name`, `app_name`, `public_addr` |
+```yaml
+# Prometheus remote_write configuration
+remote_write:
+  - url: https://prometheus-prod.grafana.net/api/prom/push
+    write_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'teleport_exporter_local_.*'
+        action: drop
+
+# Or in Grafana Agent
+metrics:
+  configs:
+    - name: default
+      remote_write:
+        - url: https://prometheus-prod.grafana.net/api/prom/push
+      scrape_configs:
+        - job_name: teleport-exporter
+          # ...
+      write_relabel_configs:
+        - source_labels: [__name__]
+          regex: 'teleport_exporter_local_.*'
+          action: drop
+```
 
 ## Installation
 
@@ -249,23 +268,31 @@ monitoring:
 ## Example Prometheus Queries
 
 ```promql
+# Check if exporter is healthy
+teleport_exporter_up == 1
+
 # Total number of nodes in the Teleport cluster
 teleport_exporter_nodes_total
 
 # Total number of Kubernetes clusters
 teleport_exporter_kubernetes_clusters_total
 
-# List all Kubernetes clusters
-teleport_exporter_kubernetes_cluster_info
-
-# Alert when a node disappears
-absent(teleport_exporter_node_info{node_name="my-important-node"})
-
 # Track changes in resource counts
-changes(teleport_exporter_nodes_total[1h])
+changes(teleport_exporter_kubernetes_clusters_total[1h])
 
-# Check if exporter is healthy
-teleport_exporter_up == 1
+# -- Local metrics (high cardinality, for local Prometheus only) --
+
+# List all Kubernetes clusters (local only)
+teleport_exporter_local_kubernetes_cluster_info
+
+# Nodes per Kubernetes cluster (local only)
+teleport_exporter_local_nodes_by_kubernetes_cluster
+
+# Recently added clusters (clusters present now but not 1 hour ago)
+teleport_exporter_local_kubernetes_cluster_info unless teleport_exporter_local_kubernetes_cluster_info offset 1h
+
+# Recently removed clusters (clusters present 1 hour ago but not now)
+teleport_exporter_local_kubernetes_cluster_info offset 1h unless teleport_exporter_local_kubernetes_cluster_info
 ```
 
 ## Example Grafana Dashboard

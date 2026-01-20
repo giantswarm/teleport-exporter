@@ -40,28 +40,12 @@ var (
 		Help:      "Total number of nodes registered in the Teleport cluster.",
 	}, []string{"cluster_name"})
 
-	// NodeInfo provides detailed information about each node.
-	// High-cardinality metric - only for local Prometheus, not remote storage.
-	NodeInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Name:      "node_info",
-		Help:      "Information about each node registered in Teleport. Value is always 1.",
-	}, []string{"cluster_name", "subkind"})
-
 	// KubeClustersTotal is the total number of Kubernetes clusters registered in Teleport.
 	KubeClustersTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "kubernetes_clusters_total",
 		Help:      "Total number of Kubernetes clusters registered in the Teleport cluster.",
 	}, []string{"cluster_name"})
-
-	// KubeClusterInfo provides detailed information about each Kubernetes cluster.
-	// High-cardinality metric - only for local Prometheus, not remote storage.
-	KubeClusterInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Name:      "kubernetes_cluster_info",
-		Help:      "Information about each Kubernetes cluster registered in Teleport. Value is always 1.",
-	}, []string{"cluster_name", "kube_cluster_name"})
 
 	// DatabasesTotal is the total number of databases registered in Teleport.
 	DatabasesTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
@@ -70,14 +54,6 @@ var (
 		Help:      "Total number of databases registered in the Teleport cluster.",
 	}, []string{"cluster_name"})
 
-	// DatabaseInfo provides detailed information about each database.
-	// High-cardinality metric - only for local Prometheus, not remote storage.
-	DatabaseInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Name:      "database_info",
-		Help:      "Information about each database registered in Teleport. Value is always 1.",
-	}, []string{"cluster_name", "protocol", "type"})
-
 	// AppsTotal is the total number of applications registered in Teleport.
 	AppsTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
@@ -85,12 +61,42 @@ var (
 		Help:      "Total number of applications registered in the Teleport cluster.",
 	}, []string{"cluster_name"})
 
+	// ================================================================================
+	// HIGH-CARDINALITY METRICS (local Prometheus only, drop before remote_write)
+	// These metrics have `_local_` in the name to make filtering easy.
+	// Use this regex to drop them: teleport_exporter_local_.*
+	// ================================================================================
+
+	// NodesByKubeClusterTotal shows the count of nodes per Kubernetes cluster.
+	// HIGH-CARDINALITY: One series per Kubernetes cluster with SSH nodes.
+	NodesByKubeClusterTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "local_nodes_by_kubernetes_cluster",
+		Help:      "Total number of SSH nodes per Kubernetes cluster. HIGH-CARDINALITY: drop before remote_write.",
+	}, []string{"cluster_name", "kube_cluster"})
+
+	// KubeClusterInfo provides detailed information about each Kubernetes cluster.
+	// HIGH-CARDINALITY: One series per Kubernetes cluster.
+	KubeClusterInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "local_kubernetes_cluster_info",
+		Help:      "Information about each Kubernetes cluster registered in Teleport. HIGH-CARDINALITY: drop before remote_write.",
+	}, []string{"cluster_name", "kube_cluster_name"})
+
+	// DatabaseInfo provides detailed information about each database.
+	// MEDIUM-CARDINALITY: Aggregated by protocol/type combination.
+	DatabaseInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "local_database_info",
+		Help:      "Count of databases by protocol and type. MEDIUM-CARDINALITY: consider dropping before remote_write.",
+	}, []string{"cluster_name", "protocol", "type"})
+
 	// AppInfo provides detailed information about each application.
-	// High-cardinality metric - only for local Prometheus, not remote storage.
+	// HIGH-CARDINALITY: One series per application.
 	AppInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
-		Name:      "app_info",
-		Help:      "Information about each application registered in Teleport. Value is always 1.",
+		Name:      "local_app_info",
+		Help:      "Information about each application registered in Teleport. HIGH-CARDINALITY: drop before remote_write.",
 	}, []string{"cluster_name", "app_name"})
 
 	// CollectDuration tracks the duration of the last metrics collection.

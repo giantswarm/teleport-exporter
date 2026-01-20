@@ -30,31 +30,31 @@ import (
 // newTestCollector creates a Collector with initialized maps for testing.
 func newTestCollector() *Collector {
 	return &Collector{
-		log:              logr.Discard(),
-		lastNodes:        make(map[string]struct{}),
-		lastKubeClusters: make(map[string]struct{}),
-		lastDatabases:    make(map[string]struct{}),
-		lastApps:         make(map[string]struct{}),
+		log:                    logr.Discard(),
+		lastNodesByKubeCluster: make(map[string]struct{}),
+		lastKubeClusters:       make(map[string]struct{}),
+		lastDatabases:          make(map[string]struct{}),
+		lastApps:               make(map[string]struct{}),
 	}
 }
 
 func TestCollector_UpdateNodeMetrics(t *testing.T) {
 	// Reset metrics before test
-	metrics.NodeInfo.Reset()
+	metrics.NodesByKubeClusterTotal.Reset()
 
 	c := newTestCollector()
 
 	nodes := []teleport.NodeInfo{
 		{
 			Name:      "node-1",
-			Hostname:  "host1.example.com",
+			Hostname:  "host1.mycluster.example.com",
 			Address:   "192.168.1.1:3022",
 			Namespace: "default",
-			SubKind:   "openssh",
+			SubKind:   "teleport",
 		},
 		{
 			Name:      "node-2",
-			Hostname:  "host2.example.com",
+			Hostname:  "host2.mycluster.example.com",
 			Address:   "192.168.1.2:3022",
 			Namespace: "default",
 			SubKind:   "teleport",
@@ -69,45 +69,190 @@ func TestCollector_UpdateNodeMetrics(t *testing.T) {
 		t.Errorf("expected NodesTotal to be 2, got %f", totalValue)
 	}
 
-	// Verify node info by subkind (aggregated)
-	opensshValue := testutil.ToFloat64(metrics.NodeInfo.WithLabelValues("test-cluster", "openssh"))
-	if opensshValue != 1 {
-		t.Errorf("expected NodeInfo for openssh to be 1, got %f", opensshValue)
+	// Verify nodes by kubernetes cluster
+	// kube_cluster is extracted from hostname: host1.mycluster.example.com -> "mycluster"
+	kubeClusterValue := testutil.ToFloat64(metrics.NodesByKubeClusterTotal.WithLabelValues("test-cluster", "mycluster"))
+	if kubeClusterValue != 2 {
+		t.Errorf("expected NodesByKubeClusterTotal for mycluster to be 2, got %f", kubeClusterValue)
 	}
 
-	// Verify that tracking map has 2 subkinds
-	if len(c.lastNodes) != 2 {
-		t.Errorf("expected lastNodes to have 2 entries, got %d", len(c.lastNodes))
+	// Verify that lastNodesByKubeCluster has 1 entry
+	if len(c.lastNodesByKubeCluster) != 1 {
+		t.Errorf("expected lastNodesByKubeCluster to have 1 entry, got %d", len(c.lastNodesByKubeCluster))
 	}
 }
 
-func TestCollector_UpdateNodeMetrics_RemovesStaleSubkinds(t *testing.T) {
+func TestCollector_UpdateNodeMetrics_RemovesStaleKubeClusters(t *testing.T) {
 	// Reset metrics before test
-	metrics.NodeInfo.Reset()
+	metrics.NodesByKubeClusterTotal.Reset()
 
 	c := newTestCollector()
 
-	// First update with 2 subkinds
+	// First update with nodes in 2 different kube clusters
 	nodes := []teleport.NodeInfo{
-		{Name: "node-1", Hostname: "host1", Address: "1.1.1.1", Namespace: "default", SubKind: "teleport"},
-		{Name: "node-2", Hostname: "host2", Address: "2.2.2.2", Namespace: "default", SubKind: "openssh"},
+		{Name: "node-1", Hostname: "host1.cluster-a.local", Address: "1.1.1.1", Namespace: "default", SubKind: "teleport"},
+		{Name: "node-2", Hostname: "host2.cluster-b.local", Address: "2.2.2.2", Namespace: "default", SubKind: "teleport"},
 	}
 	c.updateNodeMetrics("test-cluster", nodes)
 
-	// Verify 2 subkinds tracked
-	if len(c.lastNodes) != 2 {
-		t.Errorf("expected 2 subkinds after first update, got %d", len(c.lastNodes))
+	// Verify 2 kube clusters tracked
+	if len(c.lastNodesByKubeCluster) != 2 {
+		t.Errorf("expected 2 kube clusters after first update, got %d", len(c.lastNodesByKubeCluster))
 	}
 
-	// Second update with only teleport subkind (openssh removed)
+	// Second update with only cluster-a (cluster-b node removed)
 	nodes = []teleport.NodeInfo{
-		{Name: "node-1", Hostname: "host1", Address: "1.1.1.1", Namespace: "default", SubKind: "teleport"},
+		{Name: "node-1", Hostname: "host1.cluster-a.local", Address: "1.1.1.1", Namespace: "default", SubKind: "teleport"},
 	}
 	c.updateNodeMetrics("test-cluster", nodes)
 
-	// Verify only 1 subkind tracked
-	if len(c.lastNodes) != 1 {
-		t.Errorf("expected 1 subkind after removal, got %d", len(c.lastNodes))
+	// Verify only 1 kube cluster tracked
+	if len(c.lastNodesByKubeCluster) != 1 {
+		t.Errorf("expected 1 kube cluster after removal, got %d", len(c.lastNodesByKubeCluster))
+	}
+}
+
+func TestCollector_UpdateNodeMetrics_WithLabels(t *testing.T) {
+	// Reset metrics before test
+	metrics.NodesByKubeClusterTotal.Reset()
+
+	c := newTestCollector()
+
+	// Test nodes with cluster labels (labels take precedence over hostname)
+	nodes := []teleport.NodeInfo{
+		{
+			Name:      "node-1",
+			Hostname:  "host1.default.local",
+			Address:   "1.1.1.1",
+			Namespace: "default",
+			SubKind:   "teleport",
+			Labels:    map[string]string{"giantswarm.io/cluster": "prod-cluster"},
+		},
+		{
+			Name:      "node-2",
+			Hostname:  "host2.default.local",
+			Address:   "2.2.2.2",
+			Namespace: "default",
+			SubKind:   "teleport",
+			Labels:    map[string]string{"giantswarm.io/cluster": "prod-cluster"},
+		},
+		{
+			Name:      "node-3",
+			Hostname:  "host3.default.local",
+			Address:   "3.3.3.3",
+			Namespace: "default",
+			SubKind:   "teleport",
+			Labels:    map[string]string{"giantswarm.io/cluster": "dev-cluster"},
+		},
+	}
+
+	c.updateNodeMetrics("test-cluster", nodes)
+
+	// Verify nodes by kubernetes cluster (should use labels)
+	prodValue := testutil.ToFloat64(metrics.NodesByKubeClusterTotal.WithLabelValues("test-cluster", "prod-cluster"))
+	if prodValue != 2 {
+		t.Errorf("expected NodesByKubeClusterTotal for prod-cluster to be 2, got %f", prodValue)
+	}
+
+	devValue := testutil.ToFloat64(metrics.NodesByKubeClusterTotal.WithLabelValues("test-cluster", "dev-cluster"))
+	if devValue != 1 {
+		t.Errorf("expected NodesByKubeClusterTotal for dev-cluster to be 1, got %f", devValue)
+	}
+
+	// Verify 2 kube clusters tracked
+	if len(c.lastNodesByKubeCluster) != 2 {
+		t.Errorf("expected lastNodesByKubeCluster to have 2 entries, got %d", len(c.lastNodesByKubeCluster))
+	}
+}
+
+func TestExtractKubeCluster(t *testing.T) {
+	tests := []struct {
+		name     string
+		node     teleport.NodeInfo
+		expected string
+	}{
+		{
+			name: "from giantswarm.io/cluster label",
+			node: teleport.NodeInfo{
+				Hostname: "host1.local",
+				Labels:   map[string]string{"giantswarm.io/cluster": "my-cluster"},
+			},
+			expected: "my-cluster",
+		},
+		{
+			name: "from cluster label",
+			node: teleport.NodeInfo{
+				Hostname: "host1.local",
+				Labels:   map[string]string{"cluster": "another-cluster"},
+			},
+			expected: "another-cluster",
+		},
+		{
+			name: "from hostname pattern",
+			node: teleport.NodeInfo{
+				Hostname: "ip-10-0-1-5.us-west-2.compute.internal",
+				Labels:   map[string]string{},
+			},
+			expected: "us-west-2",
+		},
+		{
+			name: "from simple hostname",
+			node: teleport.NodeInfo{
+				Hostname: "node-1.mycluster.local",
+				Labels:   map[string]string{},
+			},
+			expected: "mycluster",
+		},
+		{
+			name: "unknown when no pattern matches",
+			node: teleport.NodeInfo{
+				Hostname: "single-word-host",
+				Labels:   map[string]string{},
+			},
+			expected: "unknown",
+		},
+		{
+			name: "label takes precedence over hostname",
+			node: teleport.NodeInfo{
+				Hostname: "node-1.hostname-cluster.local",
+				Labels:   map[string]string{"giantswarm.io/cluster": "label-cluster"},
+			},
+			expected: "label-cluster",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := extractKubeCluster(tt.node)
+			if result != tt.expected {
+				t.Errorf("extractKubeCluster() = %q, expected %q", result, tt.expected)
+			}
+		})
+	}
+}
+
+func TestSplitByDot(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected []string
+	}{
+		{"a.b.c", []string{"a", "b", "c"}},
+		{"single", []string{"single"}},
+		{"host.example.com", []string{"host", "example", "com"}},
+		{"", []string{""}},
+	}
+
+	for _, tt := range tests {
+		result := splitByDot(tt.input)
+		if len(result) != len(tt.expected) {
+			t.Errorf("splitByDot(%q): expected %d parts, got %d", tt.input, len(tt.expected), len(result))
+			continue
+		}
+		for i, part := range result {
+			if part != tt.expected[i] {
+				t.Errorf("splitByDot(%q): part %d: expected %q, got %q", tt.input, i, tt.expected[i], part)
+			}
+		}
 	}
 }
 
@@ -220,8 +365,8 @@ func TestCollector_New(t *testing.T) {
 	}
 
 	// Verify maps are initialized
-	if c.lastNodes == nil {
-		t.Error("expected lastNodes to be initialized")
+	if c.lastNodesByKubeCluster == nil {
+		t.Error("expected lastNodesByKubeCluster to be initialized")
 	}
 	if c.lastKubeClusters == nil {
 		t.Error("expected lastKubeClusters to be initialized")

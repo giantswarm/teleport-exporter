@@ -50,25 +50,25 @@ type Collector struct {
 	log             logr.Logger
 
 	// Tracking for smart metric cleanup (avoid Reset() gaps)
-	mu                sync.RWMutex
-	lastNodes         map[string]struct{} // key: "subkind"
-	lastKubeClusters  map[string]struct{} // key: "kubeClusterName"
-	lastDatabases     map[string]struct{} // key: "protocol|type"
-	lastApps          map[string]struct{} // key: "appName"
-	lastClusterName   string
-	consecutiveErrors int
+	mu                     sync.RWMutex
+	lastNodesByKubeCluster map[string]struct{} // key: "kube_cluster"
+	lastKubeClusters       map[string]struct{} // key: "kubeClusterName"
+	lastDatabases          map[string]struct{} // key: "protocol|type"
+	lastApps               map[string]struct{} // key: "appName"
+	lastClusterName        string
+	consecutiveErrors      int
 }
 
 // New creates a new Collector.
 func New(cfg Config) *Collector {
 	return &Collector{
-		client:           cfg.TeleportClient,
-		refreshInterval:  cfg.RefreshInterval,
-		log:              cfg.Log,
-		lastNodes:        make(map[string]struct{}),
-		lastKubeClusters: make(map[string]struct{}),
-		lastDatabases:    make(map[string]struct{}),
-		lastApps:         make(map[string]struct{}),
+		client:                 cfg.TeleportClient,
+		refreshInterval:        cfg.RefreshInterval,
+		log:                    cfg.Log,
+		lastNodesByKubeCluster: make(map[string]struct{}),
+		lastKubeClusters:       make(map[string]struct{}),
+		lastDatabases:          make(map[string]struct{}),
+		lastApps:               make(map[string]struct{}),
 	}
 }
 
@@ -213,34 +213,83 @@ func (c *Collector) updateNodeMetrics(clusterName string, nodes []teleport.NodeI
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	// Count nodes by subkind
-	subkindCounts := make(map[string]int)
+	// Count nodes by kube_cluster
+	kubeClusterCounts := make(map[string]int)
 	for _, node := range nodes {
-		subkind := node.SubKind
-		if subkind == "" {
-			subkind = "default"
-		}
-		subkindCounts[subkind]++
+		kubeCluster := extractKubeCluster(node)
+		kubeClusterCounts[kubeCluster]++
 	}
 
-	// Build set of current subkinds and update metrics
-	currentNodes := make(map[string]struct{}, len(subkindCounts))
-	for subkind, count := range subkindCounts {
-		currentNodes[subkind] = struct{}{}
-		metrics.NodeInfo.WithLabelValues(clusterName, subkind).Set(float64(count))
+	// Update nodes by kubernetes cluster metric
+	currentNodesByKubeCluster := make(map[string]struct{}, len(kubeClusterCounts))
+	for kubeCluster, count := range kubeClusterCounts {
+		currentNodesByKubeCluster[kubeCluster] = struct{}{}
+		metrics.NodesByKubeClusterTotal.WithLabelValues(clusterName, kubeCluster).Set(float64(count))
 	}
 
-	// Delete metrics for subkinds that no longer exist
-	for subkind := range c.lastNodes {
-		if _, exists := currentNodes[subkind]; !exists {
-			metrics.NodeInfo.DeleteLabelValues(c.lastClusterName, subkind)
+	// Delete metrics for kube clusters that no longer have nodes
+	for kubeCluster := range c.lastNodesByKubeCluster {
+		if _, exists := currentNodesByKubeCluster[kubeCluster]; !exists {
+			metrics.NodesByKubeClusterTotal.DeleteLabelValues(c.lastClusterName, kubeCluster)
 		}
 	}
 
-	c.lastNodes = currentNodes
+	c.lastNodesByKubeCluster = currentNodesByKubeCluster
 	c.lastClusterName = clusterName
 	metrics.NodesTotal.WithLabelValues(clusterName).Set(float64(len(nodes)))
-	c.log.V(1).Info("updated node metrics", "count", len(nodes))
+	c.log.V(1).Info("updated node metrics", "count", len(nodes), "kubeClusterCount", len(kubeClusterCounts))
+}
+
+// extractKubeCluster extracts the Kubernetes cluster name from node labels or hostname.
+// It looks for common label patterns used by Giant Swarm and other Kubernetes deployments.
+func extractKubeCluster(node teleport.NodeInfo) string {
+	// Check for common cluster labels (in order of preference)
+	clusterLabels := []string{
+		"giantswarm.io/cluster",
+		"cluster",
+		"kubernetes-cluster",
+		"kube-cluster",
+		"teleport.dev/kubernetes-cluster",
+	}
+
+	for _, labelKey := range clusterLabels {
+		if cluster, ok := node.Labels[labelKey]; ok && cluster != "" {
+			return cluster
+		}
+	}
+
+	// Try to extract from hostname pattern (e.g., "node-1.clustername" or "clustername-node-1")
+	hostname := node.Hostname
+	if hostname != "" {
+		// Check for pattern like "xxx.clustername.xxx" (domain-style)
+		if parts := splitByDot(hostname); len(parts) >= 2 {
+			// Return the second part which is often the cluster name
+			// e.g., "ip-10-0-0-1.us-west-2.compute.internal" -> "us-west-2"
+			// e.g., "node-1.mycluster.local" -> "mycluster"
+			return parts[1]
+		}
+	}
+
+	return "unknown"
+}
+
+// splitByDot splits a string by dots and returns the parts.
+func splitByDot(s string) []string {
+	if s == "" {
+		return []string{""}
+	}
+	var parts []string
+	start := 0
+	for i := 0; i < len(s); i++ {
+		if s[i] == '.' {
+			parts = append(parts, s[start:i])
+			start = i + 1
+		}
+	}
+	if start < len(s) {
+		parts = append(parts, s[start:])
+	}
+	return parts
 }
 
 func (c *Collector) updateKubeClusterMetrics(clusterName string, clusters []teleport.KubeClusterInfo) {
