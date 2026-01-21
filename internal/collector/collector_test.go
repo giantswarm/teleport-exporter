@@ -93,8 +93,8 @@ func TestCollector_UpdateNodeMetrics_IdentifiedVsUnidentified(t *testing.T) {
 	// Mix of identified and unidentified nodes
 	nodes := []teleport.NodeInfo{
 		{Name: "node-1", Hostname: "host1.cluster-a.local", Labels: map[string]string{"giantswarm.io/cluster": "prod"}}, // identified via label
-		{Name: "node-2", Hostname: "single-word-host"},                                                                   // unidentified (no dots, no labels)
-		{Name: "node-3", Hostname: "host3.cluster-b.local"},                                                              // identified via hostname
+		{Name: "node-2", Hostname: "single-word-host"},                                                                  // unidentified (no dots, no labels)
+		{Name: "node-3", Hostname: "host3.cluster-b.local"},                                                             // identified via hostname
 	}
 
 	c.updateNodeMetrics("test-cluster", nodes)
@@ -250,12 +250,12 @@ func TestIsWorkloadCluster(t *testing.T) {
 		name     string
 		expected bool
 	}{
-		{"golem", false},        // MC - no hyphen
-		{"guppy", false},        // MC - no hyphen
-		{"golem-abc12", true},   // WC - has hyphen
-		{"my-cluster", true},    // WC - has hyphen
-		{"a-b-c", true},         // WC - multiple hyphens
-		{"", false},             // empty string
+		{"golem", false},      // MC - no hyphen
+		{"guppy", false},      // MC - no hyphen
+		{"golem-abc12", true}, // WC - has hyphen
+		{"my-cluster", true},  // WC - has hyphen
+		{"a-b-c", true},       // WC - multiple hyphens
+		{"", false},           // empty string
 	}
 
 	for _, tt := range tests {
