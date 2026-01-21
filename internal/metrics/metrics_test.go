@@ -48,15 +48,16 @@ func TestNodesTotal(t *testing.T) {
 }
 
 func TestCollectDuration(t *testing.T) {
-	// Test that gauge can be set
-	CollectDuration.Set(0.5)
-	value := testutil.ToFloat64(CollectDuration)
+	CollectDuration.Reset()
+
+	CollectDuration.WithLabelValues("test-cluster").Set(0.5)
+	value := testutil.ToFloat64(CollectDuration.WithLabelValues("test-cluster"))
 	if value != 0.5 {
 		t.Errorf("expected CollectDuration to be 0.5, got %f", value)
 	}
 
-	CollectDuration.Set(1.5)
-	value = testutil.ToFloat64(CollectDuration)
+	CollectDuration.WithLabelValues("test-cluster").Set(1.5)
+	value = testutil.ToFloat64(CollectDuration.WithLabelValues("test-cluster"))
 	if value != 1.5 {
 		t.Errorf("expected CollectDuration to be 1.5, got %f", value)
 	}
@@ -73,10 +74,11 @@ func TestKubeClustersTotal(t *testing.T) {
 }
 
 func TestLastSuccessfulCollectTime(t *testing.T) {
+	LastSuccessfulCollectTime.Reset()
 	testTimestamp := float64(1704067200) // 2024-01-01 00:00:00 UTC
 
-	LastSuccessfulCollectTime.Set(testTimestamp)
-	value := testutil.ToFloat64(LastSuccessfulCollectTime)
+	LastSuccessfulCollectTime.WithLabelValues("test-cluster").Set(testTimestamp)
+	value := testutil.ToFloat64(LastSuccessfulCollectTime.WithLabelValues("test-cluster"))
 	if value != testTimestamp {
 		t.Errorf("expected LastSuccessfulCollectTime to be %f, got %f", testTimestamp, value)
 	}
@@ -103,19 +105,19 @@ func TestAppsTotal(t *testing.T) {
 }
 
 func TestCollectErrorsTotal(t *testing.T) {
-	// Get initial value
-	initialValue := testutil.ToFloat64(CollectErrorsTotal)
+	// Get initial value for test-cluster
+	initialValue := testutil.ToFloat64(CollectErrorsTotal.WithLabelValues("test-cluster"))
 
 	// Increment and verify
-	CollectErrorsTotal.Inc()
-	value := testutil.ToFloat64(CollectErrorsTotal)
+	CollectErrorsTotal.WithLabelValues("test-cluster").Inc()
+	value := testutil.ToFloat64(CollectErrorsTotal.WithLabelValues("test-cluster"))
 	if value != initialValue+1 {
 		t.Errorf("expected CollectErrorsTotal to be %f, got %f", initialValue+1, value)
 	}
 
 	// Increment again
-	CollectErrorsTotal.Inc()
-	value = testutil.ToFloat64(CollectErrorsTotal)
+	CollectErrorsTotal.WithLabelValues("test-cluster").Inc()
+	value = testutil.ToFloat64(CollectErrorsTotal.WithLabelValues("test-cluster"))
 	if value != initialValue+2 {
 		t.Errorf("expected CollectErrorsTotal to be %f, got %f", initialValue+2, value)
 	}

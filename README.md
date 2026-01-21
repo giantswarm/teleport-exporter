@@ -16,62 +16,49 @@ The teleport-exporter connects to a Teleport cluster and periodically collects i
 
 ## Metrics
 
-The exporter exposes two types of metrics:
+### Connection Status
 
-1. **Remote-storage safe metrics** - Low cardinality, safe for Grafana Cloud and other remote storage
-2. **Local-only metrics** - High cardinality (prefixed with `local_`), should be dropped before remote_write
+| Metric | Description |
+|--------|-------------|
+| `teleport_exporter_up` | Connection status (1 = connected, 0 = disconnected) |
 
-### Remote-Storage Safe Metrics
+### SSH Nodes
 
 | Metric | Description | Labels |
 |--------|-------------|--------|
-| `teleport_exporter_up` | Connection status to Teleport (1 = connected, 0 = disconnected) | - |
-| `teleport_exporter_nodes_total` | Total number of SSH nodes | `cluster_name` |
-| `teleport_exporter_kubernetes_clusters_total` | Total number of Kubernetes clusters | `cluster_name` |
-| `teleport_exporter_databases_total` | Total number of databases | `cluster_name` |
-| `teleport_exporter_apps_total` | Total number of applications | `cluster_name` |
-| `teleport_exporter_collect_duration_seconds` | Duration of last metrics collection | - |
-| `teleport_exporter_collect_errors_total` | Total collection errors | - |
-| `teleport_exporter_last_successful_collect_timestamp_seconds` | Unix timestamp of last successful collection | - |
+| `teleport_exporter_nodes_total` | Total SSH nodes | `cluster_name` |
+| `teleport_exporter_nodes_identified_total` | Nodes with identified K8s cluster | `cluster_name` |
+| `teleport_exporter_nodes_unidentified_total` | Nodes with unknown K8s cluster | `cluster_name` |
 
-### Local-Only Metrics (High Cardinality)
+### Kubernetes Clusters
 
-These metrics have `local_` in the name and should be dropped before sending to remote storage:
+| Metric | Description | Labels |
+|--------|-------------|--------|
+| `teleport_exporter_kubernetes_clusters_total` | Total Kubernetes clusters | `cluster_name` |
+| `teleport_exporter_kubernetes_management_clusters_total` | Management clusters (no hyphen in name) | `cluster_name` |
+| `teleport_exporter_kubernetes_workload_clusters_total` | Workload clusters (has hyphen in name) | `cluster_name` |
 
-| Metric | Description | Labels | Cardinality |
-|--------|-------------|--------|-------------|
-| `teleport_exporter_local_nodes_by_kubernetes_cluster` | SSH nodes per Kubernetes cluster | `cluster_name`, `kube_cluster` | High |
-| `teleport_exporter_local_kubernetes_cluster_info` | Individual Kubernetes cluster info | `cluster_name`, `kube_cluster_name` | High |
-| `teleport_exporter_local_database_info` | Databases by protocol/type | `cluster_name`, `protocol`, `type` | Medium |
-| `teleport_exporter_local_app_info` | Individual application info | `cluster_name`, `app_name` | High |
+### Databases
 
-### Filtering High-Cardinality Metrics for Remote Storage
+| Metric | Description | Labels |
+|--------|-------------|--------|
+| `teleport_exporter_databases_total` | Total databases | `cluster_name` |
+| `teleport_exporter_databases_by_protocol_total` | Databases by protocol | `cluster_name`, `protocol` |
+| `teleport_exporter_databases_by_type_total` | Databases by type | `cluster_name`, `type` |
 
-When using Grafana Cloud or other remote storage, drop high-cardinality metrics using relabeling:
+### Applications
 
-```yaml
-# Prometheus remote_write configuration
-remote_write:
-  - url: https://prometheus-prod.grafana.net/api/prom/push
-    write_relabel_configs:
-      - source_labels: [__name__]
-        regex: 'teleport_exporter_local_.*'
-        action: drop
+| Metric | Description | Labels |
+|--------|-------------|--------|
+| `teleport_exporter_apps_total` | Total applications | `cluster_name` |
 
-# Or in Grafana Agent
-metrics:
-  configs:
-    - name: default
-      remote_write:
-        - url: https://prometheus-prod.grafana.net/api/prom/push
-      scrape_configs:
-        - job_name: teleport-exporter
-          # ...
-      write_relabel_configs:
-        - source_labels: [__name__]
-          regex: 'teleport_exporter_local_.*'
-          action: drop
-```
+### Exporter Health
+
+| Metric | Description | Labels |
+|--------|-------------|--------|
+| `teleport_exporter_collect_duration_seconds` | Collection duration | `cluster_name` |
+| `teleport_exporter_collect_errors_total` | Total collection errors | `cluster_name` |
+| `teleport_exporter_last_successful_collect_timestamp_seconds` | Last successful collection timestamp | `cluster_name` |
 
 ## Installation
 
@@ -277,33 +264,32 @@ teleport_exporter_nodes_total
 # Total number of Kubernetes clusters
 teleport_exporter_kubernetes_clusters_total
 
-# Track changes in resource counts
+# Management vs workload cluster counts
+teleport_exporter_kubernetes_management_clusters_total
+teleport_exporter_kubernetes_workload_clusters_total
+
+# Databases by protocol
+sum by (protocol) (teleport_exporter_databases_by_protocol_total)
+
+# Nodes with identified vs unknown cluster
+teleport_exporter_nodes_identified_total
+teleport_exporter_nodes_unidentified_total
+
+# Track changes in resource counts over time
 changes(teleport_exporter_kubernetes_clusters_total[1h])
-
-# -- Local metrics (high cardinality, for local Prometheus only) --
-
-# List all Kubernetes clusters (local only)
-teleport_exporter_local_kubernetes_cluster_info
-
-# Nodes per Kubernetes cluster (local only)
-teleport_exporter_local_nodes_by_kubernetes_cluster
-
-# Recently added clusters (clusters present now but not 1 hour ago)
-teleport_exporter_local_kubernetes_cluster_info unless teleport_exporter_local_kubernetes_cluster_info offset 1h
-
-# Recently removed clusters (clusters present 1 hour ago but not now)
-teleport_exporter_local_kubernetes_cluster_info offset 1h unless teleport_exporter_local_kubernetes_cluster_info
 ```
 
-## Example Grafana Dashboard
+## Grafana Dashboard
 
-You can create a dashboard with panels for:
+A pre-built dashboard is included at `grafana/teleport-exporter-dashboard.json`.
 
-1. **Overview Panel**: Show `teleport_exporter_up` status
-2. **Node Count**: Display `teleport_exporter_nodes_total`
-3. **Kubernetes Clusters**: List from `teleport_exporter_kubernetes_cluster_info`
-4. **Databases**: Show count and details from database metrics
-5. **Applications**: Display application information
+Features:
+- Connection status and exporter health
+- Resource totals with trend sparklines
+- Node identification breakdown (identified vs unknown K8s cluster)
+- Kubernetes cluster breakdown (MC vs WC)
+- Database breakdown by protocol and type
+- Resource trends over time
 
 ## Troubleshooting
 
