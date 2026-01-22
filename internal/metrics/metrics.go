@@ -26,6 +26,8 @@ const (
 )
 
 var (
+	// --- Connection Status ---
+
 	// TeleportUp indicates whether the exporter can successfully connect to Teleport.
 	TeleportUp = promauto.NewGauge(prometheus.GaugeOpts{
 		Namespace: namespace,
@@ -33,20 +35,37 @@ var (
 		Help:      "Whether the exporter can successfully connect to Teleport (1 = connected, 0 = disconnected).",
 	})
 
-	// NodesTotal is the total number of nodes registered in Teleport.
+	// --- SSH Nodes ---
+
+	// NodesTotal is the total number of SSH nodes registered in Teleport.
 	NodesTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "nodes_total",
-		Help:      "Total number of nodes registered in the Teleport cluster.",
+		Help:      "Total number of SSH nodes registered in the Teleport cluster.",
 	}, []string{"cluster_name"})
 
-	// NodeInfo provides detailed information about each node.
-	// High-cardinality metric - only for local Prometheus, not remote storage.
-	NodeInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	// NodesIdentifiedTotal is the count of nodes where we could identify the Kubernetes cluster.
+	NodesIdentifiedTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
-		Name:      "node_info",
-		Help:      "Information about each node registered in Teleport. Value is always 1.",
-	}, []string{"cluster_name", "subkind"})
+		Name:      "nodes_identified_total",
+		Help:      "Number of SSH nodes with identified Kubernetes cluster (via labels or hostname).",
+	}, []string{"cluster_name"})
+
+	// NodesUnidentifiedTotal is the count of nodes where we couldn't identify the Kubernetes cluster.
+	NodesUnidentifiedTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "nodes_unidentified_total",
+		Help:      "Number of SSH nodes with unknown Kubernetes cluster.",
+	}, []string{"cluster_name"})
+
+	// NodesByKubernetesCluster shows the count of SSH nodes per Kubernetes cluster.
+	NodesByKubernetesCluster = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "nodes_by_kubernetes_cluster",
+		Help:      "Number of SSH nodes per Kubernetes cluster.",
+	}, []string{"cluster_name", "kube_cluster"})
+
+	// --- Kubernetes Clusters ---
 
 	// KubeClustersTotal is the total number of Kubernetes clusters registered in Teleport.
 	KubeClustersTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
@@ -55,13 +74,28 @@ var (
 		Help:      "Total number of Kubernetes clusters registered in the Teleport cluster.",
 	}, []string{"cluster_name"})
 
-	// KubeClusterInfo provides detailed information about each Kubernetes cluster.
-	// High-cardinality metric - only for local Prometheus, not remote storage.
-	KubeClusterInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	// KubeManagementClustersTotal is the count of management clusters (no hyphen in name).
+	KubeManagementClustersTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "kubernetes_management_clusters_total",
+		Help:      "Number of management clusters (cluster names without hyphen).",
+	}, []string{"cluster_name"})
+
+	// KubeWorkloadClustersTotal is the count of workload clusters (has hyphen in name).
+	KubeWorkloadClustersTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "kubernetes_workload_clusters_total",
+		Help:      "Number of workload clusters (cluster names with hyphen).",
+	}, []string{"cluster_name"})
+
+	// KubernetesClusterInfo provides information about each Kubernetes cluster.
+	KubernetesClusterInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "kubernetes_cluster_info",
-		Help:      "Information about each Kubernetes cluster registered in Teleport. Value is always 1.",
+		Help:      "Information about each Kubernetes cluster registered in Teleport (value is always 1).",
 	}, []string{"cluster_name", "kube_cluster_name"})
+
+	// --- Databases ---
 
 	// DatabasesTotal is the total number of databases registered in Teleport.
 	DatabasesTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
@@ -70,13 +104,21 @@ var (
 		Help:      "Total number of databases registered in the Teleport cluster.",
 	}, []string{"cluster_name"})
 
-	// DatabaseInfo provides detailed information about each database.
-	// High-cardinality metric - only for local Prometheus, not remote storage.
-	DatabaseInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
+	// DatabasesByProtocolTotal shows database count per protocol.
+	DatabasesByProtocolTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
-		Name:      "database_info",
-		Help:      "Information about each database registered in Teleport. Value is always 1.",
-	}, []string{"cluster_name", "protocol", "type"})
+		Name:      "databases_by_protocol_total",
+		Help:      "Number of databases by protocol (postgres, mysql, mongodb, etc.).",
+	}, []string{"cluster_name", "protocol"})
+
+	// DatabasesByTypeTotal shows database count per type.
+	DatabasesByTypeTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "databases_by_type_total",
+		Help:      "Number of databases by type (rds, self-hosted, cloud-sql, etc.).",
+	}, []string{"cluster_name", "type"})
+
+	// --- Applications ---
 
 	// AppsTotal is the total number of applications registered in Teleport.
 	AppsTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
@@ -85,32 +127,26 @@ var (
 		Help:      "Total number of applications registered in the Teleport cluster.",
 	}, []string{"cluster_name"})
 
-	// AppInfo provides detailed information about each application.
-	// High-cardinality metric - only for local Prometheus, not remote storage.
-	AppInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
-		Namespace: namespace,
-		Name:      "app_info",
-		Help:      "Information about each application registered in Teleport. Value is always 1.",
-	}, []string{"cluster_name", "app_name"})
+	// --- Exporter Health ---
 
 	// CollectDuration tracks the duration of the last metrics collection.
-	CollectDuration = promauto.NewGauge(prometheus.GaugeOpts{
+	CollectDuration = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "collect_duration_seconds",
 		Help:      "Duration of the last metrics collection in seconds.",
-	})
+	}, []string{"cluster_name"})
 
 	// CollectErrorsTotal is the total number of errors encountered during metrics collection.
-	CollectErrorsTotal = promauto.NewCounter(prometheus.CounterOpts{
+	CollectErrorsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Name:      "collect_errors_total",
 		Help:      "Total number of errors encountered during metrics collection.",
-	})
+	}, []string{"cluster_name"})
 
 	// LastSuccessfulCollectTime is the timestamp of the last successful collection.
-	LastSuccessfulCollectTime = promauto.NewGauge(prometheus.GaugeOpts{
+	LastSuccessfulCollectTime = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "last_successful_collect_timestamp_seconds",
 		Help:      "Unix timestamp of the last successful metrics collection.",
-	})
+	}, []string{"cluster_name"})
 )
