@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-01-22
+
 ### Added
 
 - New metrics for detailed resource breakdowns:
@@ -89,7 +91,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Health and readiness probes
 - Configurable refresh interval for metrics collection
 
-[Unreleased]: https://github.com/giantswarm/teleport-exporter/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/giantswarm/teleport-exporter/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/giantswarm/teleport-exporter/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/giantswarm/teleport-exporter/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/giantswarm/teleport-exporter/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/giantswarm/teleport-exporter/compare/v0.0.2...v0.1.0
