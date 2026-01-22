@@ -30,9 +30,11 @@ import (
 // newTestCollector creates a Collector with initialized maps for testing.
 func newTestCollector() *Collector {
 	return &Collector{
-		log:             logr.Discard(),
-		lastDbProtocols: make(map[string]struct{}),
-		lastDbTypes:     make(map[string]struct{}),
+		log:                    logr.Discard(),
+		lastNodesByKubeCluster: make(map[string]struct{}),
+		lastKubeClusters:       make(map[string]struct{}),
+		lastDbProtocols:        make(map[string]struct{}),
+		lastDbTypes:            make(map[string]struct{}),
 	}
 }
 
@@ -360,6 +362,12 @@ func TestCollector_New(t *testing.T) {
 	}
 
 	// Verify maps are initialized
+	if c.lastNodesByKubeCluster == nil {
+		t.Error("expected lastNodesByKubeCluster to be initialized")
+	}
+	if c.lastKubeClusters == nil {
+		t.Error("expected lastKubeClusters to be initialized")
+	}
 	if c.lastDbProtocols == nil {
 		t.Error("expected lastDbProtocols to be initialized")
 	}

@@ -50,21 +50,25 @@ type Collector struct {
 	log             logr.Logger
 
 	// Tracking for smart metric cleanup (avoid Reset() gaps)
-	mu                sync.RWMutex
-	lastDbProtocols   map[string]struct{} // key: "protocol"
-	lastDbTypes       map[string]struct{} // key: "type"
-	lastClusterName   string
-	consecutiveErrors int
+	mu                     sync.RWMutex
+	lastNodesByKubeCluster map[string]struct{} // key: "kube_cluster"
+	lastKubeClusters       map[string]struct{} // key: "kube_cluster_name"
+	lastDbProtocols        map[string]struct{} // key: "protocol"
+	lastDbTypes            map[string]struct{} // key: "type"
+	lastClusterName        string
+	consecutiveErrors      int
 }
 
 // New creates a new Collector.
 func New(cfg Config) *Collector {
 	return &Collector{
-		client:          cfg.TeleportClient,
-		refreshInterval: cfg.RefreshInterval,
-		log:             cfg.Log,
-		lastDbProtocols: make(map[string]struct{}),
-		lastDbTypes:     make(map[string]struct{}),
+		client:                 cfg.TeleportClient,
+		refreshInterval:        cfg.RefreshInterval,
+		log:                    cfg.Log,
+		lastNodesByKubeCluster: make(map[string]struct{}),
+		lastKubeClusters:       make(map[string]struct{}),
+		lastDbProtocols:        make(map[string]struct{}),
+		lastDbTypes:            make(map[string]struct{}),
 	}
 }
 
@@ -214,12 +218,17 @@ func (c *Collector) resetErrors() {
 }
 
 func (c *Collector) updateNodeMetrics(clusterName string, nodes []teleport.NodeInfo) {
-	// Count identified vs unidentified nodes
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Count nodes by kube cluster
+	kubeClusterCounts := make(map[string]int)
 	identifiedCount := 0
 	unidentifiedCount := 0
 
 	for _, node := range nodes {
 		kubeCluster := extractKubeCluster(node)
+		kubeClusterCounts[kubeCluster]++
 		if kubeCluster == "unknown" {
 			unidentifiedCount++
 		} else {
@@ -227,12 +236,27 @@ func (c *Collector) updateNodeMetrics(clusterName string, nodes []teleport.NodeI
 		}
 	}
 
-	// Update low-cardinality metrics
+	// Update per-kube-cluster metrics
+	currentKubeClusters := make(map[string]struct{}, len(kubeClusterCounts))
+	for kubeCluster, count := range kubeClusterCounts {
+		currentKubeClusters[kubeCluster] = struct{}{}
+		metrics.NodesByKubernetesCluster.WithLabelValues(clusterName, kubeCluster).Set(float64(count))
+	}
+
+	// Remove stale kube cluster metrics
+	for kubeCluster := range c.lastNodesByKubeCluster {
+		if _, exists := currentKubeClusters[kubeCluster]; !exists {
+			metrics.NodesByKubernetesCluster.DeleteLabelValues(c.lastClusterName, kubeCluster)
+		}
+	}
+	c.lastNodesByKubeCluster = currentKubeClusters
+
+	// Update aggregate metrics
 	metrics.NodesTotal.WithLabelValues(clusterName).Set(float64(len(nodes)))
 	metrics.NodesIdentifiedTotal.WithLabelValues(clusterName).Set(float64(identifiedCount))
 	metrics.NodesUnidentifiedTotal.WithLabelValues(clusterName).Set(float64(unidentifiedCount))
 
-	c.log.V(1).Info("updated node metrics", "count", len(nodes), "identified", identifiedCount, "unidentified", unidentifiedCount)
+	c.log.V(1).Info("updated node metrics", "count", len(nodes), "identified", identifiedCount, "unidentified", unidentifiedCount, "kubeClusters", len(kubeClusterCounts))
 }
 
 // extractKubeCluster extracts the Kubernetes cluster name from node labels or hostname.
@@ -288,11 +312,17 @@ func splitByDot(s string) []string {
 }
 
 func (c *Collector) updateKubeClusterMetrics(clusterName string, clusters []teleport.KubeClusterInfo) {
-	// Count MC vs WC clusters
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Count MC vs WC clusters and track cluster names
 	managementCount := 0
 	workloadCount := 0
-
+	currentClusters := make(map[string]struct{}, len(clusters))
 	for _, cluster := range clusters {
+		currentClusters[cluster.Name] = struct{}{}
+		metrics.KubernetesClusterInfo.WithLabelValues(clusterName, cluster.Name).Set(1)
+
 		// Classify as MC (no hyphen) or WC (has hyphen)
 		if isWorkloadCluster(cluster.Name) {
 			workloadCount++
@@ -301,7 +331,15 @@ func (c *Collector) updateKubeClusterMetrics(clusterName string, clusters []tele
 		}
 	}
 
-	// Update low-cardinality metrics
+	// Remove stale cluster info metrics
+	for kubeClusterName := range c.lastKubeClusters {
+		if _, exists := currentClusters[kubeClusterName]; !exists {
+			metrics.KubernetesClusterInfo.DeleteLabelValues(c.lastClusterName, kubeClusterName)
+		}
+	}
+	c.lastKubeClusters = currentClusters
+
+	// Update aggregate metrics
 	metrics.KubeClustersTotal.WithLabelValues(clusterName).Set(float64(len(clusters)))
 	metrics.KubeManagementClustersTotal.WithLabelValues(clusterName).Set(float64(managementCount))
 	metrics.KubeWorkloadClustersTotal.WithLabelValues(clusterName).Set(float64(workloadCount))

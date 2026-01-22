@@ -516,6 +516,134 @@
       ],
       "title": "Node Identification",
       "type": "piechart"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 29 },
+      "id": 40,
+      "panels": [],
+      "title": "Detailed Views",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "description": "Number of SSH nodes per Kubernetes cluster",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "axisBorderShow": false, "axisCenteredZero": false, "axisColorMode": "text", "axisLabel": "", "axisPlacement": "auto", "fillOpacity": 80, "gradientMode": "none", "hideFrom": { "legend": false, "tooltip": false, "viz": false }, "lineWidth": 1, "scaleDistribution": { "type": "linear" }, "thresholdsStyle": { "mode": "off" } },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 30 },
+      "id": 41,
+      "options": {
+        "barRadius": 0.05,
+        "barWidth": 0.7,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": false },
+        "orientation": "horizontal",
+        "showValue": "always",
+        "stacking": "none",
+        "tooltip": { "mode": "single", "sort": "none" },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "topk(15, teleport_exporter_nodes_by_kubernetes_cluster{cluster_name=~\"$cluster\"})", "instant": true, "legendFormat": "{{kube_cluster}}", "range": false, "refId": "A" }],
+      "title": "Nodes per Kubernetes Cluster",
+      "type": "barchart"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "description": "List of all Kubernetes clusters registered in Teleport",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": { "align": "auto", "cellOptions": { "type": "auto" }, "inspect": false },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "kube_cluster_name" }, "properties": [{ "id": "displayName", "value": "Kubernetes Cluster" }] },
+          { "matcher": { "id": "byName", "options": "Value" }, "properties": [{ "id": "custom.hidden", "value": true }] },
+          { "matcher": { "id": "byName", "options": "Time" }, "properties": [{ "id": "custom.hidden", "value": true }] }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 30 },
+      "id": 42,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": true, "enablePagination": true, "fields": "", "reducer": ["count"], "show": true },
+        "showHeader": true
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "teleport_exporter_kubernetes_cluster_info{cluster_name=~\"$cluster\"}", "format": "table", "instant": true, "legendFormat": "__auto", "range": false, "refId": "A" }],
+      "title": "Kubernetes Clusters",
+      "transformations": [{ "id": "organize", "options": { "excludeByName": { "Time": true, "Value": true, "__name__": true, "cluster_name": true }, "includeByName": {}, "indexByName": {}, "renameByName": { "kube_cluster_name": "Kubernetes Cluster" } } }],
+      "type": "table"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "description": "Kubernetes clusters that appeared in the selected time range (present now but not at the start of the range)",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": { "align": "auto", "cellOptions": { "type": "color-text" }, "inspect": false },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "kube_cluster_name" }, "properties": [{ "id": "displayName", "value": "Cluster Added" }] },
+          { "matcher": { "id": "byName", "options": "Value" }, "properties": [{ "id": "custom.hidden", "value": true }] },
+          { "matcher": { "id": "byName", "options": "Time" }, "properties": [{ "id": "custom.hidden", "value": true }] }
+        ]
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 0, "y": 38 },
+      "id": 43,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": true, "enablePagination": false, "fields": "", "reducer": ["count"], "show": true },
+        "showHeader": true
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "teleport_exporter_kubernetes_cluster_info{cluster_name=~\"$cluster\"} unless teleport_exporter_kubernetes_cluster_info{cluster_name=~\"$cluster\"} offset $__range", "format": "table", "instant": true, "legendFormat": "__auto", "range": false, "refId": "A" }],
+      "title": "Recently Added Clusters",
+      "transformations": [{ "id": "organize", "options": { "excludeByName": { "Time": true, "Value": true, "__name__": true, "cluster_name": true }, "includeByName": {}, "indexByName": {}, "renameByName": { "kube_cluster_name": "Cluster Added" } } }],
+      "type": "table"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "description": "Kubernetes clusters that disappeared in the selected time range (present at the start but not now)",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": { "align": "auto", "cellOptions": { "type": "color-text" }, "inspect": false },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }] }
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "kube_cluster_name" }, "properties": [{ "id": "displayName", "value": "Cluster Removed" }] },
+          { "matcher": { "id": "byName", "options": "Value" }, "properties": [{ "id": "custom.hidden", "value": true }] },
+          { "matcher": { "id": "byName", "options": "Time" }, "properties": [{ "id": "custom.hidden", "value": true }] }
+        ]
+      },
+      "gridPos": { "h": 6, "w": 12, "x": 12, "y": 38 },
+      "id": 44,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": true, "enablePagination": false, "fields": "", "reducer": ["count"], "show": true },
+        "showHeader": true
+      },
+      "pluginVersion": "11.0.0",
+      "targets": [{ "datasource": { "type": "prometheus", "uid": "${datasource}" }, "editorMode": "code", "expr": "teleport_exporter_kubernetes_cluster_info{cluster_name=~\"$cluster\"} offset $__range unless teleport_exporter_kubernetes_cluster_info{cluster_name=~\"$cluster\"}", "format": "table", "instant": true, "legendFormat": "__auto", "range": false, "refId": "A" }],
+      "title": "Recently Removed Clusters",
+      "transformations": [{ "id": "organize", "options": { "excludeByName": { "Time": true, "Value": true, "__name__": true, "cluster_name": true }, "includeByName": {}, "indexByName": {}, "renameByName": { "kube_cluster_name": "Cluster Removed" } } }],
+      "type": "table"
     }
   ],
   "refresh": "1m",

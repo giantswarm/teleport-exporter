@@ -29,6 +29,7 @@ The teleport-exporter connects to a Teleport cluster and periodically collects i
 | `teleport_exporter_nodes_total` | Total SSH nodes | `cluster_name` |
 | `teleport_exporter_nodes_identified_total` | Nodes with identified K8s cluster | `cluster_name` |
 | `teleport_exporter_nodes_unidentified_total` | Nodes with unknown K8s cluster | `cluster_name` |
+| `teleport_exporter_nodes_by_kubernetes_cluster` | Nodes per Kubernetes cluster | `cluster_name`, `kube_cluster` |
 
 ### Kubernetes Clusters
 
@@ -37,6 +38,7 @@ The teleport-exporter connects to a Teleport cluster and periodically collects i
 | `teleport_exporter_kubernetes_clusters_total` | Total Kubernetes clusters | `cluster_name` |
 | `teleport_exporter_kubernetes_management_clusters_total` | Management clusters (no hyphen in name) | `cluster_name` |
 | `teleport_exporter_kubernetes_workload_clusters_total` | Workload clusters (has hyphen in name) | `cluster_name` |
+| `teleport_exporter_kubernetes_cluster_info` | Info for each K8s cluster (value=1) | `cluster_name`, `kube_cluster_name` |
 
 ### Databases
 

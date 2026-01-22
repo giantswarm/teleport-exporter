@@ -58,6 +58,13 @@ var (
 		Help:      "Number of SSH nodes with unknown Kubernetes cluster.",
 	}, []string{"cluster_name"})
 
+	// NodesByKubernetesCluster shows the count of SSH nodes per Kubernetes cluster.
+	NodesByKubernetesCluster = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "nodes_by_kubernetes_cluster",
+		Help:      "Number of SSH nodes per Kubernetes cluster.",
+	}, []string{"cluster_name", "kube_cluster"})
+
 	// --- Kubernetes Clusters ---
 
 	// KubeClustersTotal is the total number of Kubernetes clusters registered in Teleport.
@@ -80,6 +87,13 @@ var (
 		Name:      "kubernetes_workload_clusters_total",
 		Help:      "Number of workload clusters (cluster names with hyphen).",
 	}, []string{"cluster_name"})
+
+	// KubernetesClusterInfo provides information about each Kubernetes cluster.
+	KubernetesClusterInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
+		Namespace: namespace,
+		Name:      "kubernetes_cluster_info",
+		Help:      "Information about each Kubernetes cluster registered in Teleport (value is always 1).",
+	}, []string{"cluster_name", "kube_cluster_name"})
 
 	// --- Databases ---
 
