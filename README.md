@@ -16,43 +16,51 @@ The teleport-exporter connects to a Teleport cluster and periodically collects i
 
 ## Metrics
 
-The exporter exposes the following metrics:
+### Connection Status
 
-### General Metrics
+| Metric | Description |
+|--------|-------------|
+| `teleport_exporter_up` | Connection status (1 = connected, 0 = disconnected) |
 
-| Metric | Description | Labels |
-|--------|-------------|--------|
-| `teleport_exporter_up` | Whether the exporter can successfully connect to Teleport (1 = connected, 0 = disconnected) | - |
-| `teleport_exporter_cluster_info` | Information about the Teleport cluster | `cluster_name` |
-| `teleport_exporter_collect_duration_seconds` | Duration of the last metrics collection in seconds | - |
-
-### Node Metrics
+### SSH Nodes
 
 | Metric | Description | Labels |
 |--------|-------------|--------|
-| `teleport_exporter_nodes_total` | Total number of nodes registered in the Teleport cluster | `cluster_name` |
-| `teleport_exporter_node_info` | Information about each node registered in Teleport | `cluster_name`, `node_name`, `hostname`, `address`, `namespace`, `subkind` |
+| `teleport_exporter_nodes_total` | Total SSH nodes | `cluster_name` |
+| `teleport_exporter_nodes_identified_total` | Nodes with identified K8s cluster | `cluster_name` |
+| `teleport_exporter_nodes_unidentified_total` | Nodes with unknown K8s cluster | `cluster_name` |
+| `teleport_exporter_nodes_by_kubernetes_cluster` | Nodes per Kubernetes cluster | `cluster_name`, `kube_cluster` |
 
-### Kubernetes Cluster Metrics
-
-| Metric | Description | Labels |
-|--------|-------------|--------|
-| `teleport_exporter_kubernetes_clusters_total` | Total number of Kubernetes clusters registered in the Teleport cluster | `cluster_name` |
-| `teleport_exporter_kubernetes_cluster_info` | Information about each Kubernetes cluster registered in Teleport | `cluster_name`, `kube_cluster_name` |
-
-### Database Metrics
+### Kubernetes Clusters
 
 | Metric | Description | Labels |
 |--------|-------------|--------|
-| `teleport_exporter_databases_total` | Total number of databases registered in the Teleport cluster | `cluster_name` |
-| `teleport_exporter_database_info` | Information about each database registered in Teleport | `cluster_name`, `database_name`, `protocol`, `type` |
+| `teleport_exporter_kubernetes_clusters_total` | Total Kubernetes clusters | `cluster_name` |
+| `teleport_exporter_kubernetes_management_clusters_total` | Management clusters (no hyphen in name) | `cluster_name` |
+| `teleport_exporter_kubernetes_workload_clusters_total` | Workload clusters (has hyphen in name) | `cluster_name` |
+| `teleport_exporter_kubernetes_cluster_info` | Info for each K8s cluster (value=1) | `cluster_name`, `kube_cluster_name` |
 
-### Application Metrics
+### Databases
 
 | Metric | Description | Labels |
 |--------|-------------|--------|
-| `teleport_exporter_apps_total` | Total number of applications registered in the Teleport cluster | `cluster_name` |
-| `teleport_exporter_app_info` | Information about each application registered in Teleport | `cluster_name`, `app_name`, `public_addr` |
+| `teleport_exporter_databases_total` | Total databases | `cluster_name` |
+| `teleport_exporter_databases_by_protocol_total` | Databases by protocol | `cluster_name`, `protocol` |
+| `teleport_exporter_databases_by_type_total` | Databases by type | `cluster_name`, `type` |
+
+### Applications
+
+| Metric | Description | Labels |
+|--------|-------------|--------|
+| `teleport_exporter_apps_total` | Total applications | `cluster_name` |
+
+### Exporter Health
+
+| Metric | Description | Labels |
+|--------|-------------|--------|
+| `teleport_exporter_collect_duration_seconds` | Collection duration | `cluster_name` |
+| `teleport_exporter_collect_errors_total` | Total collection errors | `cluster_name` |
+| `teleport_exporter_last_successful_collect_timestamp_seconds` | Last successful collection timestamp | `cluster_name` |
 
 ## Installation
 
@@ -249,34 +257,41 @@ monitoring:
 ## Example Prometheus Queries
 
 ```promql
+# Check if exporter is healthy
+teleport_exporter_up == 1
+
 # Total number of nodes in the Teleport cluster
 teleport_exporter_nodes_total
 
 # Total number of Kubernetes clusters
 teleport_exporter_kubernetes_clusters_total
 
-# List all Kubernetes clusters
-teleport_exporter_kubernetes_cluster_info
+# Management vs workload cluster counts
+teleport_exporter_kubernetes_management_clusters_total
+teleport_exporter_kubernetes_workload_clusters_total
 
-# Alert when a node disappears
-absent(teleport_exporter_node_info{node_name="my-important-node"})
+# Databases by protocol
+sum by (protocol) (teleport_exporter_databases_by_protocol_total)
 
-# Track changes in resource counts
-changes(teleport_exporter_nodes_total[1h])
+# Nodes with identified vs unknown cluster
+teleport_exporter_nodes_identified_total
+teleport_exporter_nodes_unidentified_total
 
-# Check if exporter is healthy
-teleport_exporter_up == 1
+# Track changes in resource counts over time
+changes(teleport_exporter_kubernetes_clusters_total[1h])
 ```
 
-## Example Grafana Dashboard
+## Grafana Dashboard
 
-You can create a dashboard with panels for:
+A pre-built dashboard is included at `grafana/teleport-exporter-dashboard.json`.
 
-1. **Overview Panel**: Show `teleport_exporter_up` status
-2. **Node Count**: Display `teleport_exporter_nodes_total`
-3. **Kubernetes Clusters**: List from `teleport_exporter_kubernetes_cluster_info`
-4. **Databases**: Show count and details from database metrics
-5. **Applications**: Display application information
+Features:
+- Connection status and exporter health
+- Resource totals with trend sparklines
+- Node identification breakdown (identified vs unknown K8s cluster)
+- Kubernetes cluster breakdown (MC vs WC)
+- Database breakdown by protocol and type
+- Resource trends over time
 
 ## Troubleshooting
 
