@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Use AppVersion instead of Chart Version for image tag.
+
 ## [0.1.3] - 2026-01-22
 
 ### Added

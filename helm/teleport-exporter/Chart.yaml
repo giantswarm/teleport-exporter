@@ -1,5 +1,5 @@
 apiVersion: v2
-appVersion: 0.1.0
+appVersion: 0.1.3
 name: teleport-exporter
 description: A Helm chart for teleport-exporter, which exposes Prometheus metrics about nodes, clusters, databases, and applications registered in Teleport.
 type: application
