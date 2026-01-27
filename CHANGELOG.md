@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+
 - Use AppVersion instead of Chart Version for image tag.
+- Update Grafana dashboard to include recently added / removed clusters.
 
 ## [0.1.3] - 2026-01-22
 
