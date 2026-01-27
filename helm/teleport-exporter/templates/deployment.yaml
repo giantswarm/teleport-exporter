@@ -78,7 +78,7 @@ spec:
       {{- end }}
       containers:
       - name: {{ include "name" . }}
-        image: "{{ .Values.registry.domain }}/{{ .Values.image.name }}:{{ .Values.image.tag | default .Chart.Version }}"
+        image: "{{ .Values.registry.domain }}/{{ .Values.image.name }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         args:
           - --teleport-addr={{ required "teleport.address is required" .Values.teleport.address }}
           - --identity-file={{ .Values.teleport.identityFilePath }}
