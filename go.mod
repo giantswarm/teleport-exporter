@@ -5,7 +5,7 @@ go 1.25.8
 require (
 	github.com/go-logr/logr v1.4.3
 	github.com/go-logr/zapr v1.3.0
-	github.com/gravitational/teleport/api v0.0.0-20260311083900-ed76e109f3c1
+	github.com/gravitational/teleport/api v0.0.0-20260315193602-c3632c94569b
 	github.com/prometheus/client_golang v1.23.2
 	go.uber.org/zap v1.27.1
 )
