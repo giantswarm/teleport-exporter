@@ -5,7 +5,7 @@ go 1.25.8
 require (
 	github.com/go-logr/logr v1.4.3
 	github.com/go-logr/zapr v1.3.0
-	github.com/gravitational/teleport/api v0.0.0-20260311083900-ed76e109f3c1
+	github.com/gravitational/teleport/api v0.0.0-20260325153626-636039328455
 	github.com/prometheus/client_golang v1.23.2
 	go.uber.org/zap v1.27.1
 )
@@ -55,7 +55,7 @@ require (
 	golang.org/x/text v0.33.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409 // indirect
-	google.golang.org/grpc v1.78.0 // indirect
+	google.golang.org/grpc v1.79.3 // indirect
 	google.golang.org/protobuf v1.36.11 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
