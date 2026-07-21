@@ -3,7 +3,7 @@ module github.com/giantswarm/teleport-exporter
 go 1.25.8
 
 require (
-	github.com/go-logr/logr v1.4.3
+	github.com/go-logr/logr v1.4.4
 	github.com/go-logr/zapr v1.3.0
 	github.com/gravitational/teleport/api v0.0.0-20260325153626-636039328455
 	github.com/prometheus/client_golang v1.23.2
