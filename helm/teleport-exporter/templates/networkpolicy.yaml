@@ -50,4 +50,3 @@ spec:
         - port: 8081
           protocol: TCP
 {{- end }}
-

@@ -26,4 +26,3 @@ data:
             app.kubernetes.io/managed-by: tbot
             app.kubernetes.io/name: {{ include "name" . }}
 {{- end }}
-
