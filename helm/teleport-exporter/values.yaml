@@ -85,7 +85,7 @@ identity:
 # When enabled, tbot runs as a separate deployment and manages the identity secret
 tbot:
   # Enable tbot deployment for automatic identity renewal
-  enabled: false
+  enabled: true
 
   # Name of the secret where tbot will store the identity
   # Defaults to <release-name>-identity
