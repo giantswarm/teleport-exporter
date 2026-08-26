@@ -10,4 +10,3 @@ spec:
   roles:
     - {{ include "resource.default.name" . }}
 {{- end }}
-

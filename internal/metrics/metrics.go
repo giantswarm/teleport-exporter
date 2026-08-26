@@ -143,6 +143,13 @@ var (
 		Help:      "Total number of errors encountered during metrics collection.",
 	}, []string{"cluster_name"})
 
+	// IdentityReloadErrorsTotal is the total number of identity file reloads that did not complete cleanly.
+	IdentityReloadErrorsTotal = promauto.NewCounter(prometheus.CounterOpts{
+		Namespace: namespace,
+		Name:      "identity_reload_errors_total",
+		Help:      "Total number of Teleport identity file reloads that did not complete cleanly (the read failed, timed out, or overlapped an earlier one).",
+	})
+
 	// LastSuccessfulCollectTime is the timestamp of the last successful collection.
 	LastSuccessfulCollectTime = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,

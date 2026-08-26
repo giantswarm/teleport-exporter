@@ -130,6 +130,11 @@ func (c *Collector) collect(ctx context.Context) {
 	startTime := time.Now()
 	var hadErrors bool
 
+	if err := c.client.ReloadIdentity(); err != nil {
+		c.log.Error(err, "failed to reload identity file")
+		metrics.IdentityReloadErrorsTotal.Inc()
+	}
+
 	// Get cluster name
 	clusterName, err := c.client.GetClusterName(ctx)
 	if err != nil {

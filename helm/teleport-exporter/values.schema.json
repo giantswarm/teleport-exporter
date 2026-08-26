@@ -1,37 +1,58 @@
 {
-    "$schema": "http://json-schema.org/schema#",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
     "type": "object",
+    "additionalProperties": false,
     "properties": {
-        "replicas": {
-            "type": "integer"
+        "baseDomain": {
+            "type": "string"
         },
-        "registry": {
+        "bootstrapMode": {
             "type": "object",
+            "additionalProperties": true
+        },
+        "chartOperator": {
+            "type": "object",
+            "additionalProperties": true
+        },
+        "ciliumNetworkPolicy": {
+            "type": "object",
+            "additionalProperties": true
+        },
+        "cluster": {
+            "type": "object",
+            "additionalProperties": true
+        },
+        "clusterCA": {
+            "type": "string"
+        },
+        "clusterCIDR": {
+            "type": "string"
+        },
+        "clusterDNSIP": {
+            "type": "string"
+        },
+        "clusterID": {
+            "type": "string"
+        },
+        "exporter": {
+            "type": "object",
+            "additionalProperties": false,
             "properties": {
-                "domain": {
+                "refreshInterval": {
                     "type": "string"
                 }
             }
         },
-        "image": {
-            "type": "object",
-            "properties": {
-                "name": {
-                    "type": "string"
-                },
-                "tag": {
-                    "type": "string"
-                }
-            }
-        },
-        "imagePullSecrets": {
-            "type": "array"
+        "gcpProject": {
+            "type": "string"
         },
         "global": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
                 "podSecurityStandards": {
                     "type": "object",
+                    "additionalProperties": false,
                     "properties": {
                         "enforced": {
                             "type": "boolean"
@@ -40,19 +61,99 @@
                 }
             }
         },
+        "identity": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "existingSecret": {
+                    "type": "string"
+                }
+            }
+        },
+        "image": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "imagePullSecrets": {
+            "type": "array"
+        },
+        "monitoring": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "serviceMonitor": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "enabled": {
+                            "type": "boolean"
+                        },
+                        "interval": {
+                            "type": "string"
+                        },
+                        "labels": {
+                            "type": "object",
+                            "additionalProperties": false
+                        },
+                        "metricRelabelings": {
+                            "type": "array"
+                        },
+                        "relabelings": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "additionalProperties": false,
+                                "properties": {
+                                    "action": {
+                                        "type": "string"
+                                    },
+                                    "regex": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "scrapeTimeout": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "networkpolicy": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "enabled": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "nodeSelector": {
+            "type": "object",
+            "additionalProperties": false
+        },
         "pod": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
-                "user": {
+                "group": {
                     "type": "object",
+                    "additionalProperties": false,
                     "properties": {
                         "id": {
                             "type": "integer"
                         }
                     }
                 },
-                "group": {
+                "user": {
                     "type": "object",
+                    "additionalProperties": false,
                     "properties": {
                         "id": {
                             "type": "integer"
@@ -61,23 +162,24 @@
                 }
             }
         },
-        "nodeSelector": {
-            "type": "object"
-        },
-        "tolerations": {
-            "type": "array"
+        "podAnnotations": {
+            "type": "object",
+            "additionalProperties": false
         },
         "podLabels": {
-            "type": "object"
+            "type": "object",
+            "additionalProperties": false
         },
         "podSecurityContext": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
                 "runAsNonRoot": {
                     "type": "boolean"
                 },
                 "seccompProfile": {
                     "type": "object",
+                    "additionalProperties": false,
                     "properties": {
                         "type": {
                             "type": "string"
@@ -86,14 +188,61 @@
                 }
             }
         },
+        "provider": {
+            "type": "string"
+        },
+        "registry": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "domain": {
+                    "type": "string"
+                }
+            }
+        },
+        "replicas": {
+            "type": "integer"
+        },
+        "resources": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "limits": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "cpu": {
+                            "type": "string"
+                        },
+                        "memory": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "requests": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "cpu": {
+                            "type": "string"
+                        },
+                        "memory": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "securityContext": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
                 "allowPrivilegeEscalation": {
                     "type": "boolean"
                 },
                 "capabilities": {
                     "type": "object",
+                    "additionalProperties": false,
                     "properties": {
                         "drop": {
                             "type": "array",
@@ -114,6 +263,7 @@
                 },
                 "seccompProfile": {
                     "type": "object",
+                    "additionalProperties": false,
                     "properties": {
                         "type": {
                             "type": "string"
@@ -122,28 +272,70 @@
                 }
             }
         },
-        "resources": {
+        "subscriptionID": {
+            "type": "string"
+        },
+        "tbot": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
-                "requests": {
+                "certificateTTL": {
+                    "type": "string"
+                },
+                "enabled": {
+                    "type": "boolean"
+                },
+                "identitySecretName": {
+                    "type": "string"
+                },
+                "image": {
                     "type": "object",
+                    "additionalProperties": false,
                     "properties": {
-                        "cpu": {
+                        "name": {
                             "type": "string"
                         },
-                        "memory": {
+                        "pullPolicy": {
+                            "type": "string"
+                        },
+                        "registry": {
+                            "type": "string"
+                        },
+                        "tag": {
                             "type": "string"
                         }
                     }
                 },
-                "limits": {
+                "renewalInterval": {
+                    "type": "string"
+                },
+                "resources": {
                     "type": "object",
+                    "additionalProperties": false,
                     "properties": {
-                        "cpu": {
-                            "type": "string"
+                        "limits": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpu": {
+                                    "type": "string"
+                                },
+                                "memory": {
+                                    "type": "string"
+                                }
+                            }
                         },
-                        "memory": {
-                            "type": "string"
+                        "requests": {
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "cpu": {
+                                    "type": "string"
+                                },
+                                "memory": {
+                                    "type": "string"
+                                }
+                            }
                         }
                     }
                 }
@@ -151,149 +343,36 @@
         },
         "teleport": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
                 "address": {
                     "type": "string"
+                },
+                "createResources": {
+                    "type": "boolean"
                 },
                 "identityFilePath": {
                     "type": "string"
                 },
                 "insecure": {
                     "type": "boolean"
-                },
-                "createResources": {
-                    "type": "boolean"
-                }
-            },
-            "required": ["address"]
-        },
-        "exporter": {
-            "type": "object",
-            "properties": {
-                "refreshInterval": {
-                    "type": "string"
                 }
             }
         },
-        "identity": {
-            "type": "object",
-            "properties": {
-                "existingSecret": {
-                    "type": "string"
-                }
-            }
-        },
-        "tbot": {
-            "type": "object",
-            "properties": {
-                "enabled": {
-                    "type": "boolean"
-                },
-                "identitySecretName": {
-                    "type": "string"
-                },
-                "renewalInterval": {
-                    "type": "string"
-                },
-                "certificateTTL": {
-                    "type": "string"
-                },
-                "image": {
-                    "type": "object",
-                    "properties": {
-                        "registry": {
-                            "type": "string"
-                        },
-                        "name": {
-                            "type": "string"
-                        },
-                        "tag": {
-                            "type": "string"
-                        },
-                        "pullPolicy": {
-                            "type": "string"
-                        }
-                    }
-                },
-                "resources": {
-                    "type": "object",
-                    "properties": {
-                        "requests": {
-                            "type": "object",
-                            "properties": {
-                                "cpu": {
-                                    "type": "string"
-                                },
-                                "memory": {
-                                    "type": "string"
-                                }
-                            }
-                        },
-                        "limits": {
-                            "type": "object",
-                            "properties": {
-                                "cpu": {
-                                    "type": "string"
-                                },
-                                "memory": {
-                                    "type": "string"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        },
-        "monitoring": {
-            "type": "object",
-            "properties": {
-                "serviceMonitor": {
-                    "type": "object",
-                    "properties": {
-                        "enabled": {
-                            "type": "boolean"
-                        },
-                        "labels": {
-                            "type": "object"
-                        },
-                        "interval": {
-                            "type": "string"
-                        },
-                        "scrapeTimeout": {
-                            "type": "string"
-                        },
-                        "relabelings": {
-                            "type": "array"
-                        },
-                        "metricRelabelings": {
-                            "type": "array"
-                        }
-                    }
-                }
-            }
-        },
-        "networkpolicy": {
-            "type": "object",
-            "properties": {
-                "enabled": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "podAnnotations": {
-            "type": "object"
+        "tolerations": {
+            "type": "array"
         },
         "verticalPodAutoscaler": {
             "type": "object",
+            "additionalProperties": false,
             "properties": {
-                "enabled": {
-                    "type": "boolean"
-                },
                 "containerPolicies": {
                     "type": "object",
+                    "additionalProperties": false,
                     "properties": {
-                        "minAllowed": {
+                        "maxAllowed": {
                             "type": "object",
+                            "additionalProperties": false,
                             "properties": {
                                 "cpu": {
                                     "type": "string"
@@ -303,8 +382,9 @@
                                 }
                             }
                         },
-                        "maxAllowed": {
+                        "minAllowed": {
                             "type": "object",
+                            "additionalProperties": false,
                             "properties": {
                                 "cpu": {
                                     "type": "string"
@@ -315,6 +395,9 @@
                             }
                         }
                     }
+                },
+                "enabled": {
+                    "type": "boolean"
                 }
             }
         }
