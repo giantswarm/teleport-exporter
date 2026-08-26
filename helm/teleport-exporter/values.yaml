@@ -55,7 +55,7 @@ resources:
 teleport:
   # Address of the Teleport proxy or auth server (required)
   # Example: teleport.example.com:443
-  address: ""
+  address: "teleport.example.com:443"
 
   # Path to the identity file inside the container
   # This should be mounted from a secret or volume
