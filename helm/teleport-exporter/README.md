@@ -30,13 +30,13 @@ A Helm chart for teleport-exporter, which exposes Prometheus metrics about nodes
 | resources.requests.memory | string | `"64Mi"` |  |
 | resources.limits.cpu | string | `"100m"` |  |
 | resources.limits.memory | string | `"128Mi"` |  |
-| teleport.address | string | `""` |  |
+| teleport.address | string | `"teleport.example.com:443"` |  |
 | teleport.identityFilePath | string | `"/var/run/teleport/identity"` |  |
 | teleport.insecure | bool | `false` |  |
 | teleport.createResources | bool | `false` |  |
 | exporter.refreshInterval | string | `"30s"` |  |
 | identity.existingSecret | string | `""` |  |
-| tbot.enabled | bool | `false` |  |
+| tbot.enabled | bool | `true` |  |
 | tbot.identitySecretName | string | `""` |  |
 | tbot.renewalInterval | string | `"20m"` |  |
 | tbot.certificateTTL | string | `"24h"` |  |

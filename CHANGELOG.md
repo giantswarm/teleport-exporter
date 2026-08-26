@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Reload the identity file before each collection and readiness check, so rotated Machine ID certificates are picked up without a pod restart.
+
 ### Added
 
+- `teleport_exporter_identity_reload_errors_total` metric, counting failures to re-read the identity file from disk.
 - Add `io.giantswarm.application.audience` and `io.giantswarm.application.managed` chart annotations for Backstage visibility.
 
 ### Changed
