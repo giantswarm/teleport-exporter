@@ -83,7 +83,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "failed to create logger: %v\n", err)
 		os.Exit(1)
 	}
-	defer zapLog.Sync()
+	defer func() { _ = zapLog.Sync() }()
 	log := zapr.NewLogger(zapLog)
 
 	// Log version information at startup (no build_info metric to reduce cardinality)
@@ -125,7 +125,7 @@ func main() {
 		log.Error(err, "failed to create Teleport client")
 		os.Exit(1)
 	}
-	defer teleportClient.Close()
+	defer func() { _ = teleportClient.Close() }()
 
 	// Create and start the collector
 	col := collector.New(collector.Config{
@@ -214,17 +214,17 @@ func main() {
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("ok"))
+	_, _ = w.Write([]byte("ok"))
 }
 
 func readyHandler(client *teleport.Client) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if client.IsConnected() {
 			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("ok"))
+			_, _ = w.Write([]byte("ok"))
 		} else {
 			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte("not connected to Teleport"))
+			_, _ = w.Write([]byte("not connected to Teleport"))
 		}
 	}
 }

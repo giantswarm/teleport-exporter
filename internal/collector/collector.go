@@ -33,6 +33,10 @@ const (
 	maxBackoffMultiplier = 8
 	// jitterFraction is the fraction of the interval to use for jitter (0.1 = 10%)
 	jitterFraction = 0.1
+	// unknownValue is used wherever a cluster, protocol or type cannot be determined.
+	unknownValue = "unknown"
+	// giantswarmClusterLabel is the Giant Swarm node label holding the Kubernetes cluster name.
+	giantswarmClusterLabel = "giantswarm.io/cluster"
 )
 
 // Config holds the configuration for the collector.
@@ -77,6 +81,7 @@ func (c *Collector) Run(ctx context.Context) {
 	c.log.Info("starting collector", "refreshInterval", c.refreshInterval)
 
 	// Initial collection with small random delay to avoid thundering herd on startup
+	//nolint:gosec // G404: startup jitter needs spread, not unpredictability
 	initialJitter := time.Duration(rand.Int63n(int64(c.refreshInterval / 4)))
 	c.log.V(1).Info("waiting before initial collection", "jitter", initialJitter)
 
@@ -118,6 +123,7 @@ func (c *Collector) calculateNextInterval() time.Duration {
 	}
 
 	// Add jitter (±10% of interval)
+	//nolint:gosec // G404: interval jitter needs spread, not unpredictability
 	jitter := time.Duration(float64(interval) * jitterFraction * (2*rand.Float64() - 1))
 	interval += jitter
 
@@ -143,7 +149,7 @@ func (c *Collector) collect(ctx context.Context) {
 		// Use last known cluster name for error metrics, or "unknown" if not set
 		errorClusterName := c.lastClusterName
 		if errorClusterName == "" {
-			errorClusterName = "unknown"
+			errorClusterName = unknownValue
 		}
 		metrics.CollectErrorsTotal.WithLabelValues(errorClusterName).Inc()
 		c.incrementErrors()
@@ -234,7 +240,7 @@ func (c *Collector) updateNodeMetrics(clusterName string, nodes []teleport.NodeI
 	for _, node := range nodes {
 		kubeCluster := extractKubeCluster(node)
 		kubeClusterCounts[kubeCluster]++
-		if kubeCluster == "unknown" {
+		if kubeCluster == unknownValue {
 			unidentifiedCount++
 		} else {
 			identifiedCount++
@@ -269,7 +275,7 @@ func (c *Collector) updateNodeMetrics(clusterName string, nodes []teleport.NodeI
 func extractKubeCluster(node teleport.NodeInfo) string {
 	// Check for common cluster labels (in order of preference)
 	clusterLabels := []string{
-		"giantswarm.io/cluster",
+		giantswarmClusterLabel,
 		"cluster",
 		"kubernetes-cluster",
 		"kube-cluster",
@@ -294,7 +300,7 @@ func extractKubeCluster(node teleport.NodeInfo) string {
 		}
 	}
 
-	return "unknown"
+	return unknownValue
 }
 
 // splitByDot splits a string by dots and returns the parts.
@@ -373,11 +379,11 @@ func (c *Collector) updateDatabaseMetrics(clusterName string, databases []telepo
 	for _, db := range databases {
 		protocol := db.Protocol
 		if protocol == "" {
-			protocol = "unknown"
+			protocol = unknownValue
 		}
 		dbType := db.Type
 		if dbType == "" {
-			dbType = "unknown"
+			dbType = unknownValue
 		}
 		protocolCounts[protocol]++
 		typeCounts[dbType]++
