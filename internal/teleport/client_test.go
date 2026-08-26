@@ -45,8 +45,13 @@ import (
 // API client does at dial time, and it reuses those same configs for every
 // later reconnect.
 func TestReloadIdentity_PicksUpRotatedIdentity(t *testing.T) {
+	const (
+		generation1 = "generation-1"
+		generation2 = "generation-2"
+	)
+
 	path := filepath.Join(t.TempDir(), "identity")
-	writeIdentityFile(t, path, "generation-1")
+	writeIdentityFile(t, path, generation1)
 
 	creds, err := client.NewDynamicIdentityFileCreds(path)
 	if err != nil {
@@ -66,16 +71,16 @@ func TestReloadIdentity_PicksUpRotatedIdentity(t *testing.T) {
 	// only the certificate the client offers.
 	sshConfig.HostKeyCallback = func(string, net.Addr, ssh.PublicKey) error { return nil }
 
-	if got := clientCertCommonName(t, tlsConfig); got != "generation-1" {
+	if got := clientCertCommonName(t, tlsConfig); got != generation1 {
 		t.Fatalf("initial client certificate = %q, want generation-1", got)
 	}
-	if got := offeredSSHCertKeyID(t, sshConfig); got != "generation-1" {
+	if got := offeredSSHCertKeyID(t, sshConfig); got != generation1 {
 		t.Fatalf("initial SSH certificate = %q, want generation-1", got)
 	}
 
-	writeIdentityFile(t, path, "generation-2")
+	writeIdentityFile(t, path, generation2)
 
-	if got := clientCertCommonName(t, tlsConfig); got != "generation-1" {
+	if got := clientCertCommonName(t, tlsConfig); got != generation1 {
 		t.Fatalf("client certificate = %q before reload, want generation-1", got)
 	}
 
@@ -84,12 +89,12 @@ func TestReloadIdentity_PicksUpRotatedIdentity(t *testing.T) {
 		t.Fatalf("ReloadIdentity: %v", err)
 	}
 
-	if got := clientCertCommonName(t, tlsConfig); got != "generation-2" {
+	if got := clientCertCommonName(t, tlsConfig); got != generation2 {
 		t.Fatalf("client certificate = %q after reload, want generation-2: a rotated identity is never picked up", got)
 	}
 	// The reported failure was "ssh: cert has expired", so the SSH path is the
 	// one that has to keep working.
-	if got := offeredSSHCertKeyID(t, sshConfig); got != "generation-2" {
+	if got := offeredSSHCertKeyID(t, sshConfig); got != generation2 {
 		t.Fatalf("SSH certificate = %q after reload, want generation-2: a rotated identity is never picked up", got)
 	}
 }
@@ -112,6 +117,7 @@ func offeredSSHCertKeyID(t *testing.T, cfg *ssh.ClientConfig) string {
 
 	var offered string
 	serverConfig := &ssh.ServerConfig{
+		//nolint:gosec // G408: this server only records the offered certificate, it never authenticates
 		PublicKeyCallback: func(_ ssh.ConnMetadata, key ssh.PublicKey) (*ssh.Permissions, error) {
 			if cert, ok := key.(*ssh.Certificate); ok {
 				offered = cert.KeyId
@@ -127,7 +133,7 @@ func offeredSSHCertKeyID(t *testing.T, cfg *ssh.ClientConfig) string {
 	if err != nil {
 		t.Fatalf("listen: %v", err)
 	}
-	defer listener.Close()
+	defer func() { _ = listener.Close() }()
 
 	done := make(chan struct{})
 	go func() {
@@ -136,8 +142,8 @@ func offeredSSHCertKeyID(t *testing.T, cfg *ssh.ClientConfig) string {
 		if err != nil {
 			return
 		}
-		defer conn.Close()
-		//nolint:errcheck // authentication is rejected on purpose
+		defer func() { _ = conn.Close() }()
+		//nolint:errcheck,gosec // authentication is rejected on purpose
 		ssh.NewServerConn(conn, serverConfig)
 	}()
 
@@ -145,12 +151,12 @@ func offeredSSHCertKeyID(t *testing.T, cfg *ssh.ClientConfig) string {
 	if err != nil {
 		t.Fatalf("dial: %v", err)
 	}
-	defer clientConn.Close()
+	defer func() { _ = clientConn.Close() }()
 
 	// Authentication is expected to fail; only the certificate the client
 	// offered on the way there matters.
 	if conn, _, _, err := ssh.NewClientConn(clientConn, "proxy.example.com:3023", cfg); err == nil {
-		conn.Close()
+		_ = conn.Close()
 	}
 	<-done
 
@@ -226,8 +232,8 @@ func writeIdentityFile(t *testing.T, path, commonName string) {
 		CertType:        ssh.UserCert,
 		KeyId:           commonName,
 		ValidPrincipals: []string{"-teleport-internal-join"},
-		ValidAfter:      uint64(time.Now().Add(-time.Hour).Unix()),
-		ValidBefore:     uint64(time.Now().Add(time.Hour).Unix()),
+		ValidAfter:      uint64(time.Now().Add(-time.Hour).Unix()), //nolint:gosec // G115: a validity window around now fits uint64
+		ValidBefore:     uint64(time.Now().Add(time.Hour).Unix()),  //nolint:gosec // G115: a validity window around now fits uint64
 	}
 	if err := sshCert.SignCert(rand.Reader, signer); err != nil {
 		t.Fatalf("sign ssh certificate: %v", err)

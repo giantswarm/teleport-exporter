@@ -23,6 +23,8 @@ import (
 
 const (
 	namespace = "teleport_exporter"
+	// labelClusterName is the label holding the Teleport cluster name.
+	labelClusterName = "cluster_name"
 )
 
 var (
@@ -42,28 +44,28 @@ var (
 		Namespace: namespace,
 		Name:      "nodes_total",
 		Help:      "Total number of SSH nodes registered in the Teleport cluster.",
-	}, []string{"cluster_name"})
+	}, []string{labelClusterName})
 
 	// NodesIdentifiedTotal is the count of nodes where we could identify the Kubernetes cluster.
 	NodesIdentifiedTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "nodes_identified_total",
 		Help:      "Number of SSH nodes with identified Kubernetes cluster (via labels or hostname).",
-	}, []string{"cluster_name"})
+	}, []string{labelClusterName})
 
 	// NodesUnidentifiedTotal is the count of nodes where we couldn't identify the Kubernetes cluster.
 	NodesUnidentifiedTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "nodes_unidentified_total",
 		Help:      "Number of SSH nodes with unknown Kubernetes cluster.",
-	}, []string{"cluster_name"})
+	}, []string{labelClusterName})
 
 	// NodesByKubernetesCluster shows the count of SSH nodes per Kubernetes cluster.
 	NodesByKubernetesCluster = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "nodes_by_kubernetes_cluster",
 		Help:      "Number of SSH nodes per Kubernetes cluster.",
-	}, []string{"cluster_name", "kube_cluster"})
+	}, []string{labelClusterName, "kube_cluster"})
 
 	// --- Kubernetes Clusters ---
 
@@ -72,28 +74,28 @@ var (
 		Namespace: namespace,
 		Name:      "kubernetes_clusters_total",
 		Help:      "Total number of Kubernetes clusters registered in the Teleport cluster.",
-	}, []string{"cluster_name"})
+	}, []string{labelClusterName})
 
 	// KubeManagementClustersTotal is the count of management clusters (no hyphen in name).
 	KubeManagementClustersTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "kubernetes_management_clusters_total",
 		Help:      "Number of management clusters (cluster names without hyphen).",
-	}, []string{"cluster_name"})
+	}, []string{labelClusterName})
 
 	// KubeWorkloadClustersTotal is the count of workload clusters (has hyphen in name).
 	KubeWorkloadClustersTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "kubernetes_workload_clusters_total",
 		Help:      "Number of workload clusters (cluster names with hyphen).",
-	}, []string{"cluster_name"})
+	}, []string{labelClusterName})
 
 	// KubernetesClusterInfo provides information about each Kubernetes cluster.
 	KubernetesClusterInfo = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "kubernetes_cluster_info",
 		Help:      "Information about each Kubernetes cluster registered in Teleport (value is always 1).",
-	}, []string{"cluster_name", "kube_cluster_name"})
+	}, []string{labelClusterName, "kube_cluster_name"})
 
 	// --- Databases ---
 
@@ -102,21 +104,21 @@ var (
 		Namespace: namespace,
 		Name:      "databases_total",
 		Help:      "Total number of databases registered in the Teleport cluster.",
-	}, []string{"cluster_name"})
+	}, []string{labelClusterName})
 
 	// DatabasesByProtocolTotal shows database count per protocol.
 	DatabasesByProtocolTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "databases_by_protocol_total",
 		Help:      "Number of databases by protocol (postgres, mysql, mongodb, etc.).",
-	}, []string{"cluster_name", "protocol"})
+	}, []string{labelClusterName, "protocol"})
 
 	// DatabasesByTypeTotal shows database count per type.
 	DatabasesByTypeTotal = promauto.NewGaugeVec(prometheus.GaugeOpts{
 		Namespace: namespace,
 		Name:      "databases_by_type_total",
 		Help:      "Number of databases by type (rds, self-hosted, cloud-sql, etc.).",
-	}, []string{"cluster_name", "type"})
+	}, []string{labelClusterName, "type"})
 
 	// --- Applications ---
 
@@ -125,7 +127,7 @@ var (
 		Namespace: namespace,
 		Name:      "apps_total",
 		Help:      "Total number of applications registered in the Teleport cluster.",
-	}, []string{"cluster_name"})
+	}, []string{labelClusterName})
 
 	// --- Exporter Health ---
 
@@ -134,14 +136,14 @@ var (
 		Namespace: namespace,
 		Name:      "collect_duration_seconds",
 		Help:      "Duration of the last metrics collection in seconds.",
-	}, []string{"cluster_name"})
+	}, []string{labelClusterName})
 
 	// CollectErrorsTotal is the total number of errors encountered during metrics collection.
 	CollectErrorsTotal = promauto.NewCounterVec(prometheus.CounterOpts{
 		Namespace: namespace,
 		Name:      "collect_errors_total",
 		Help:      "Total number of errors encountered during metrics collection.",
-	}, []string{"cluster_name"})
+	}, []string{labelClusterName})
 
 	// IdentityReloadErrorsTotal is the total number of identity file reloads that did not complete cleanly.
 	IdentityReloadErrorsTotal = promauto.NewCounter(prometheus.CounterOpts{
@@ -155,5 +157,5 @@ var (
 		Namespace: namespace,
 		Name:      "last_successful_collect_timestamp_seconds",
 		Help:      "Unix timestamp of the last successful metrics collection.",
-	}, []string{"cluster_name"})
+	}, []string{labelClusterName})
 )
