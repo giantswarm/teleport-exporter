@@ -4,3 +4,11 @@ teleport:
 
 identity:
   existingSecret: "teleport-exporter-identity"
+
+# app-test-suite installs with `helm --wait`; the exporter's /readyz and tbot both
+# need a real Teleport backend, so the smoke test runs the exporter scaled to zero
+# and without tbot (the identity comes from existingSecret above).
+replicas: 0
+
+tbot:
+  enabled: false
