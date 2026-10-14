@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Reload the identity file before each collection and readiness check, so rotated Machine ID certificates are picked up without a pod restart.
 - Update `github.com/charlievieth/strcase` to v0.0.6. v0.0.5 panics at startup under Go 1.27, whose Unicode tables are version 17.0.0.
+- Update `golang.org/x/net` to v0.61.0 and `golang.org/x/crypto` to v0.58.0 to fix known vulnerabilities.
 
 ### Added
 
