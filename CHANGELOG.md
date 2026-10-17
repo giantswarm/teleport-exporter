@@ -7,15 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.16-rc.10] - 2026-10-15
+
 ### Fixed
 
-- Reload the identity file before each collection and readiness check, so rotated Machine ID certificates are picked up without a pod restart.
 - Update `github.com/charlievieth/strcase` to v0.0.6. v0.0.5 panics at startup under Go 1.27, whose Unicode tables are version 17.0.0.
 - Update `golang.org/x/net` to v0.61.0 and `golang.org/x/crypto` to v0.58.0 to fix known vulnerabilities.
+
+## [0.1.9] - 2026-08-26
 
 ### Added
 
 - `teleport_exporter_identity_reload_errors_total` metric, counting failures to re-read the identity file from disk.
+
+### Fixed
+
+- Reload the identity file before each collection and readiness check, so rotated Machine ID certificates are picked up without a pod restart.
+
+## [0.1.5] - 2026-07-21
+
+### Added
+
 - Add `io.giantswarm.application.audience` and `io.giantswarm.application.managed` chart annotations for Backstage visibility.
 
 ### Changed
@@ -114,7 +126,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Health and readiness probes
 - Configurable refresh interval for metrics collection
 
-[Unreleased]: https://github.com/giantswarm/teleport-exporter/compare/v0.1.4...HEAD
+[Unreleased]: https://github.com/giantswarm/teleport-exporter/compare/v0.1.16-rc.10...HEAD
+[0.1.16-rc.10]: https://github.com/giantswarm/teleport-exporter/compare/v0.1.9...v0.1.16-rc.10
+[0.1.9]: https://github.com/giantswarm/teleport-exporter/compare/v0.1.5...v0.1.9
+[0.1.5]: https://github.com/giantswarm/teleport-exporter/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/giantswarm/teleport-exporter/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/giantswarm/teleport-exporter/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/giantswarm/teleport-exporter/compare/v0.1.1...v0.1.2
