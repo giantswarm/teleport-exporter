@@ -1,1 +1,4 @@
 CVE-2026-84445 until=2026-10-29 # google.golang.org/grpc@v1.84.0
+CVE-2026-116586 until=2026-11-27 # github.com/go-jose/go-jose/v4@v4.1.4 since=2026-10-28
+CVE-2026-116585 until=2026-11-27 # github.com/go-jose/go-jose/v4@v4.1.4 since=2026-10-28
+CVE-2026-5160 until=2026-11-27 # github.com/yuin/goldmark@v1.2.1 since=2026-10-28
