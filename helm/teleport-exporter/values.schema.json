@@ -43,16 +43,20 @@
                 }
             }
         },
+        "externalDNSIP": {
+            "type": "string"
+        },
         "gcpProject": {
             "type": "string"
         },
         "global": {
             "type": "object",
-            "additionalProperties": false,
+            "description": "Global values shared between all subcharts and the platform.",
+            "additionalProperties": true,
             "properties": {
                 "podSecurityStandards": {
                     "type": "object",
-                    "additionalProperties": false,
+                    "additionalProperties": true,
                     "properties": {
                         "enforced": {
                             "type": "boolean"
@@ -60,6 +64,10 @@
                     }
                 }
             }
+        },
+        "helm": {
+            "type": "object",
+            "additionalProperties": true
         },
         "identity": {
             "type": "object",
@@ -81,6 +89,9 @@
         },
         "imagePullSecrets": {
             "type": "array"
+        },
+        "managementCluster": {
+            "type": "string"
         },
         "monitoring": {
             "type": "object",
