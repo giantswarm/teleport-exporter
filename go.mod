@@ -1,11 +1,11 @@
 module github.com/giantswarm/teleport-exporter
 
-go 1.26.0
+go 1.26.5
 
 require (
 	github.com/go-logr/logr v1.4.4
 	github.com/go-logr/zapr v1.3.0
-	github.com/gravitational/teleport/api v0.0.0-20260325153626-636039328455
+	github.com/gravitational/teleport/api v0.0.0-20260813024307-37c3a8a456ec
 	github.com/prometheus/client_golang v1.25.0
 	go.uber.org/zap v1.28.0
 	golang.org/x/crypto v0.58.0
@@ -20,13 +20,13 @@ require (
 	github.com/coreos/go-semver v0.3.1 // indirect
 	github.com/felixge/httpsnoop v1.1.0 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-piv/piv-go/v2 v2.4.0 // indirect
+	github.com/go-piv/piv-go/v2 v2.6.0 // indirect
 	github.com/gobwas/httphead v0.1.0 // indirect
 	github.com/gobwas/pool v0.2.1 // indirect
 	github.com/gobwas/ws v1.4.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/gravitational/trace v1.5.1 // indirect
+	github.com/gravitational/trace v1.5.4 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.31.0 // indirect
 	github.com/jonboulle/clockwork v0.5.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
