@@ -424,3 +424,14 @@ func TestCollector_ErrorTracking(t *testing.T) {
 		t.Errorf("expected consecutiveErrors to be 0 after reset, got %d", c.consecutiveErrors)
 	}
 }
+
+func TestCollector_HasCollected(t *testing.T) {
+	c := newTestCollector()
+	if c.HasCollected() {
+		t.Fatal("HasCollected() = true before any collection")
+	}
+	c.markCollected()
+	if !c.HasCollected() {
+		t.Fatal("HasCollected() = false after markCollected()")
+	}
+}
