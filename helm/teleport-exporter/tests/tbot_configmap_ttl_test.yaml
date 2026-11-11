@@ -1,0 +1,106 @@
+suite: tbot configmap credential TTL
+templates:
+  - templates/tbot-configmap.yaml
+set:
+  teleport.address: teleport.example.com:443
+tests:
+  - it: defaults to credential_ttl 12h (the role cap)
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^credential_ttl: 12h$'
+      - notMatchRegex:
+          path: data["tbot.yaml"]
+          pattern: certificate_ttl
+  - it: honours the legacy value
+    set:
+      tbot.certificateTTL: 24h
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^credential_ttl: 24h$'
+  - it: uses the new value
+    set:
+      tbot.credentialTTL: 8h
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^credential_ttl: 8h$'
+  - it: new value wins over legacy
+    set:
+      tbot.credentialTTL: 8h
+      tbot.certificateTTL: 24h
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^credential_ttl: 8h$'
+  - it: keeps certificate_ttl for tbot 16
+    set:
+      tbot.image.tag: 16.5.0
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^certificate_ttl: 12h$'
+  - it: switches at 17.3.0
+    set:
+      tbot.image.tag: 17.3.0
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^credential_ttl: 12h$'
+  - it: tolerates a non-semver tag
+    set:
+      tbot.image.tag: latest
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^credential_ttl: 12h$'
+  - it: ignores a digest suffix
+    set:
+      tbot.image.tag: "18.4.0@sha256:abc"
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^credential_ttl: 12h$'
+  - it: keeps certificate_ttl for a pre-release below 17.3.0
+    set:
+      tbot.image.tag: "17.2.9-rc.1"
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^certificate_ttl: 12h$'
+  - it: switches at a 17.3.0 pre-release
+    set:
+      tbot.image.tag: "17.3.0-rc.1"
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^credential_ttl: 12h$'
+  - it: ignores an underscore suffix
+    set:
+      tbot.image.tag: "17.2.0_foo"
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^certificate_ttl: 12h$'
+  - it: ignores a fourth version component
+    set:
+      tbot.image.tag: "1.2.3.4"
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^certificate_ttl: 12h$'
+  - it: strips a v prefix below 17.3.0
+    set:
+      tbot.image.tag: "v16.4.0"
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^certificate_ttl: 12h$'
+  - it: strips a v prefix at 17.3.0
+    set:
+      tbot.image.tag: "v17.3.0"
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^credential_ttl: 12h$'

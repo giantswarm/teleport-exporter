@@ -39,7 +39,8 @@ A Helm chart for teleport-exporter, which exposes Prometheus metrics about nodes
 | tbot.enabled | bool | `true` |  |
 | tbot.identitySecretName | string | `""` |  |
 | tbot.renewalInterval | string | `"20m"` |  |
-| tbot.certificateTTL | string | `"24h"` |  |
+| tbot.credentialTTL | string | `""` |  |
+| tbot.certificateTTL | string | `""` |  |
 | tbot.image.registry | string | `"gsoci.azurecr.io"` |  |
 | tbot.image.name | string | `"giantswarm/tbot-distroless"` |  |
 | tbot.image.tag | string | `"18.2.4"` |  |

@@ -94,8 +94,13 @@ tbot:
   # How often tbot renews the certificate
   renewalInterval: "20m"
 
-  # Certificate TTL
-  certificateTTL: "24h"
+  # Lifetime of the credentials tbot requests (tbot config key credential_ttl).
+  # Empty means 12h, matching max_session_ttl of the bot role; a longer value only
+  # produces a "shorter than requested" warning on every renewal.
+  credentialTTL: ""
+
+  # Deprecated: use credentialTTL. Used only when credentialTTL is empty.
+  certificateTTL: ""
 
   image:
     registry: gsoci.azurecr.io
