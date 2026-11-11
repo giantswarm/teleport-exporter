@@ -5,7 +5,7 @@ replicas: 1
 # (monitoring.serviceMonitor.interval, or the scraper's default when unset),
 # so the new pod is scraped after it becomes Ready and before the old pod is removed.
 # It should also cover about 2x exporter.refreshInterval, because after a failed first collection the next one only runs after backoff.
-minReadySeconds: 90 # @schema minimum: 0
+minReadySeconds: 90  # @schema minimum: 0
 
 registry:
   domain: gsoci.azurecr.io
