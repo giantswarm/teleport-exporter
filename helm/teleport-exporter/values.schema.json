@@ -5,6 +5,10 @@
         "replicas": {
             "type": "integer"
         },
+        "minReadySeconds": {
+            "type": "integer",
+            "minimum": 0
+        },
         "registry": {
             "type": "object",
             "properties": {

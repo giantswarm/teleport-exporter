@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Migrate chart metadata annotations to OCI-compatible format.
+- Readiness probe now waits for the first finished collection before reporting ready.
+- Set `minReadySeconds` (default 90s) so the old pod keeps serving metrics until the new pod has been scraped.
 
 ## [0.1.4] - 2026-01-27
 

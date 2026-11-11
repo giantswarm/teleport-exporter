@@ -15,6 +15,7 @@ metadata:
     {{- include "labels.common" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicas }}
+  minReadySeconds: {{ .Values.minReadySeconds }}
   selector:
     matchLabels:
       {{- include "labels.selector" . | nindent 6 }}
