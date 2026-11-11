@@ -185,7 +185,7 @@ helm upgrade -i teleport-exporter \
 | `tbot.enabled` | Deploy tbot for automatic identity renewal | `false` |
 | `tbot.identitySecretName` | Name of the secret where tbot stores the identity | `<release-name>-identity` |
 | `tbot.renewalInterval` | How often tbot renews the certificate | `20m` |
-| `tbot.credentialTTL` | Lifetime of the credentials tbot requests (`credential_ttl`; `certificate_ttl` for tbot older than 17.3.0) | `12h` |
+| `tbot.credentialTTL` | Lifetime of the credentials tbot requests (`credential_ttl`; needs tbot 17.3.0 or newer) | `12h` |
 | `tbot.certificateTTL` | Deprecated, use `tbot.credentialTTL` | `""` |
 | `tbot.image.registry` | tbot image registry | `gsoci.azurecr.io` |
 | `tbot.image.name` | tbot image name | `giantswarm/tbot-distroless` |

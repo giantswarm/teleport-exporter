@@ -45,18 +45,6 @@ app.kubernetes.io/instance: {{ .Release.Name | quote }}
 {{- end -}}
 
 {{/*
-tbot configuration key for the credential lifetime. tbot 17.3.0 renamed
-certificate_ttl to credential_ttl; a v2 config is read strictly, so an older tbot
-refuses to start on the new key. The legacy key is rendered only when the image tag
-(optional leading "v") starts with MAJOR.MINOR.PATCH, that prefix is older than
-17.3.0 (any suffix is ignored); any other tag, such as "latest", gets the current key.
-*/}}
-{{- define "teleport-exporter.tbotTTLKey" -}}
-{{- $v := regexFind "^[0-9]+\\.[0-9]+\\.[0-9]+" (.Values.tbot.image.tag | toString | trimPrefix "v") -}}
-{{- if and $v (semverCompare "<17.3.0" $v) -}}certificate_ttl{{- else -}}credential_ttl{{- end -}}
-{{- end -}}
-
-{{/*
 tbot credential lifetime: tbot.credentialTTL, else the deprecated tbot.certificateTTL,
 else 12h, the max_session_ttl of the bot role.
 */}}

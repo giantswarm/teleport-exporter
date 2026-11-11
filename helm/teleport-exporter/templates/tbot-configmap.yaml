@@ -13,7 +13,7 @@ data:
       join_method: kubernetes
       token: {{ include "resource.default.name" . }}
     renewal_interval: {{ .Values.tbot.renewalInterval | default "20m" }}
-    {{ include "teleport-exporter.tbotTTLKey" . }}: {{ include "teleport-exporter.tbotCredentialTTL" . }}
+    credential_ttl: {{ include "teleport-exporter.tbotCredentialTTL" . }}
     storage:
       type: memory
     proxy_server: {{ required "teleport.address is required" .Values.teleport.address }}
