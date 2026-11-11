@@ -225,7 +225,7 @@ func readyHandler(conn connectionChecker, col collectionChecker) http.HandlerFun
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !col.HasCollected() {
 			w.WriteHeader(http.StatusServiceUnavailable)
-			w.Write([]byte("initial collection not completed"))
+			_, _ = w.Write([]byte("initial collection not completed"))
 			return
 		}
 		if conn.IsConnected() {
