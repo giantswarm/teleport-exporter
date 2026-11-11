@@ -5,7 +5,7 @@ replicas: 1
 # (monitoring.serviceMonitor.interval, or the scraper's default when unset),
 # so the new pod is scraped after it becomes Ready and before the old pod is removed.
 # It should also cover about 2x exporter.refreshInterval, because after a failed first collection the next one only runs after backoff.
-minReadySeconds: 90
+minReadySeconds: 90 # @schema minimum: 0
 
 registry:
   domain: gsoci.azurecr.io
@@ -62,7 +62,7 @@ resources:
 teleport:
   # Address of the Teleport proxy or auth server (required)
   # Example: teleport.example.com:443
-  address: ""
+  address: "teleport.example.com:443"
 
   # Path to the identity file inside the container
   # This should be mounted from a secret or volume
@@ -92,7 +92,7 @@ identity:
 # When enabled, tbot runs as a separate deployment and manages the identity secret
 tbot:
   # Enable tbot deployment for automatic identity renewal
-  enabled: false
+  enabled: true
 
   # Name of the secret where tbot will store the identity
   # Defaults to <release-name>-identity

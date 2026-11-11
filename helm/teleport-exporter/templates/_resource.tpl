@@ -26,4 +26,3 @@ room for such suffix.
 {{- define "resource.pullSecret.name" -}}
 {{- include "resource.default.name" . -}}-pull-secret
 {{- end -}}
-

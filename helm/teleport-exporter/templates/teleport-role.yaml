@@ -32,4 +32,3 @@ spec:
   options:
     max_session_ttl: 12h
 {{- end }}
-

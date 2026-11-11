@@ -94,9 +94,9 @@ func TestCollector_UpdateNodeMetrics_IdentifiedVsUnidentified(t *testing.T) {
 
 	// Mix of identified and unidentified nodes
 	nodes := []teleport.NodeInfo{
-		{Name: "node-1", Hostname: "host1.cluster-a.local", Labels: map[string]string{"giantswarm.io/cluster": "prod"}}, // identified via label
-		{Name: "node-2", Hostname: "single-word-host"},                                                                  // unidentified (no dots, no labels)
-		{Name: "node-3", Hostname: "host3.cluster-b.local"},                                                             // identified via hostname
+		{Name: "node-1", Hostname: "host1.cluster-a.local", Labels: map[string]string{giantswarmClusterLabel: "prod"}}, // identified via label
+		{Name: "node-2", Hostname: "single-word-host"},                                                                 // unidentified (no dots, no labels)
+		{Name: "node-3", Hostname: "host3.cluster-b.local"},                                                            // identified via hostname
 	}
 
 	c.updateNodeMetrics("test-cluster", nodes)
@@ -119,6 +119,8 @@ func TestCollector_UpdateNodeMetrics_IdentifiedVsUnidentified(t *testing.T) {
 }
 
 func TestExtractKubeCluster(t *testing.T) {
+	const wantCluster = "my-cluster"
+
 	tests := []struct {
 		name     string
 		node     teleport.NodeInfo
@@ -128,9 +130,9 @@ func TestExtractKubeCluster(t *testing.T) {
 			name: "from giantswarm.io/cluster label",
 			node: teleport.NodeInfo{
 				Hostname: "host1.local",
-				Labels:   map[string]string{"giantswarm.io/cluster": "my-cluster"},
+				Labels:   map[string]string{giantswarmClusterLabel: wantCluster},
 			},
-			expected: "my-cluster",
+			expected: wantCluster,
 		},
 		{
 			name: "from cluster label",
@@ -168,7 +170,7 @@ func TestExtractKubeCluster(t *testing.T) {
 			name: "label takes precedence over hostname",
 			node: teleport.NodeInfo{
 				Hostname: "node-1.hostname-cluster.local",
-				Labels:   map[string]string{"giantswarm.io/cluster": "label-cluster"},
+				Labels:   map[string]string{giantswarmClusterLabel: "label-cluster"},
 			},
 			expected: "label-cluster",
 		},

@@ -28,4 +28,3 @@ spec:
   updatePolicy:
     updateMode: Auto
 {{- end }}
-

@@ -41,4 +41,3 @@ subjects:
     name: {{ include "resource.default.name" . }}-tbot
     namespace: {{ include "resource.default.namespace" . }}
 {{- end }}
-

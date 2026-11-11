@@ -18,7 +18,10 @@ package teleport
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -28,6 +31,14 @@ import (
 const (
 	// Default timeout for API operations if not specified
 	defaultAPITimeout = 30 * time.Second
+	// identityReloadTimeout bounds a single identity file read, see ReloadIdentity.
+	identityReloadTimeout = 1 * time.Second
+	// healthCheckTimeout bounds the health check ping. Together with
+	// identityReloadTimeout it has to stay inside the readiness probe's
+	// timeoutSeconds (see helm/teleport-exporter/templates/deployment.yaml),
+	// so that a slow check makes the handler report not ready instead of
+	// making the kubelet time the probe out.
+	healthCheckTimeout = 3 * time.Second
 )
 
 // Config holds the configuration for the Teleport client.
@@ -47,9 +58,11 @@ type Config struct {
 // Client wraps the Teleport API client.
 type Client struct {
 	client     *client.Client
+	creds      *client.DynamicIdentityFileCreds
 	log        logr.Logger
 	apiTimeout time.Duration
 	connected  bool
+	reloading  atomic.Bool
 	mu         sync.RWMutex
 }
 
@@ -98,7 +111,16 @@ func NewClient(cfg Config) (*Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), apiTimeout)
 	defer cancel()
 
-	creds := client.LoadIdentityFile(cfg.IdentityFile)
+	// client.LoadIdentityFile caches the file contents for the lifetime of the
+	// credential, but tbot rotates the short lived Machine ID certificate on
+	// disk, so it has to be served through callbacks instead - see
+	// ReloadIdentity. These credentials authenticate SSH as the
+	// -teleport-internal-join principal, which Teleport includes on every user
+	// certificate.
+	creds, err := client.NewDynamicIdentityFileCreds(cfg.IdentityFile)
+	if err != nil {
+		return nil, err
+	}
 
 	c, err := client.New(ctx, client.Config{
 		Addrs:                    []string{cfg.ProxyAddr},
@@ -113,10 +135,43 @@ func NewClient(cfg Config) (*Client, error) {
 
 	return &Client{
 		client:     c,
+		creds:      creds,
 		log:        cfg.Log,
 		apiTimeout: apiTimeout,
 		connected:  true,
 	}, nil
+}
+
+// ReloadIdentity re-reads the identity file from disk so that subsequent TLS
+// and SSH handshakes use the current certificate. Without it the client keeps
+// presenting the certificate that was on disk at startup and every reconnect
+// eventually fails with "cert has expired". DynamicIdentityFileCreds
+// deliberately does not reload on its own, so callers have to do it.
+//
+// The read is bounded, and skipped while an earlier one is still running: it
+// is not context aware, so a stalled identity volume would otherwise hang
+// every caller and, on the readiness path, leave a goroutine behind per probe.
+// Both cases report an error even though the credential in place may still be
+// current - a reload takes well under a millisecond, so anything slow enough
+// to hit them is worth seeing.
+func (c *Client) ReloadIdentity() error {
+	if !c.reloading.CompareAndSwap(false, true) {
+		return errors.New("previous identity file reload is still running")
+	}
+
+	done := make(chan error, 1)
+	go func() {
+		err := c.creds.Reload()
+		c.reloading.Store(false)
+		done <- err
+	}()
+
+	select {
+	case err := <-done:
+		return err
+	case <-time.After(identityReloadTimeout):
+		return fmt.Errorf("identity file reload did not finish within %s", identityReloadTimeout)
+	}
 }
 
 // Close closes the Teleport client connection.
@@ -136,8 +191,16 @@ func (c *Client) IsConnected() bool {
 	}
 	c.mu.RUnlock()
 
+	// Reload before pinging. The collector reloads on its own cadence too, but
+	// that interval stretches by up to 256x under backoff, so the readiness
+	// probe is what bounds how long a stale certificate can keep the client
+	// unhealthy after the identity file has been rotated.
+	if err := c.ReloadIdentity(); err != nil {
+		c.log.V(1).Info("failed to reload identity file", "error", err)
+	}
+
 	// Perform actual health check with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), healthCheckTimeout)
 	defer cancel()
 
 	_, err := c.client.Ping(ctx)

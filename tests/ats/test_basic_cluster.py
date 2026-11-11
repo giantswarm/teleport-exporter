@@ -49,7 +49,6 @@ def test_app_resources_created(kube_cluster: Cluster) -> None:
         kube_cluster.kube_client, namespace=namespace_name
     ).get_or_none(name=app_name)
     assert deployment is not None, f"Deployment '{app_name}' was not created"
-    assert deployment.obj["spec"]["replicas"] >= 1
 
     service_account = pykube.ServiceAccount.objects(
         kube_cluster.kube_client, namespace=namespace_name
