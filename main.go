@@ -157,7 +157,7 @@ func main() {
 	// Set up health probe server with security hardening
 	probeMux := http.NewServeMux()
 	probeMux.HandleFunc("/healthz", healthHandler)
-	probeMux.HandleFunc("/readyz", readyHandler(teleportClient))
+	probeMux.HandleFunc("/readyz", readyHandler(teleportClient, col))
 
 	probeServer := &http.Server{
 		Addr:           probeAddr,
@@ -217,9 +217,18 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write([]byte("ok"))
 }
 
-func readyHandler(client *teleport.Client) http.HandlerFunc {
+type connectionChecker interface{ IsConnected() bool }
+
+type collectionChecker interface{ HasCollected() bool }
+
+func readyHandler(conn connectionChecker, col collectionChecker) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if client.IsConnected() {
+		if !col.HasCollected() {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			_, _ = w.Write([]byte("initial collection not completed"))
+			return
+		}
+		if conn.IsConnected() {
 			w.WriteHeader(http.StatusOK)
 			_, _ = w.Write([]byte("ok"))
 		} else {

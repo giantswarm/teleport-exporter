@@ -93,6 +93,10 @@
         "managementCluster": {
             "type": "string"
         },
+        "minReadySeconds": {
+            "type": "integer",
+            "minimum": 0
+        },
         "monitoring": {
             "type": "object",
             "additionalProperties": false,
