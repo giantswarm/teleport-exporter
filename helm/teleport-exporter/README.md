@@ -9,6 +9,7 @@ A Helm chart for teleport-exporter, which exposes Prometheus metrics about nodes
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | replicas | int | `1` |  |
+| minReadySeconds | int | `90` |  |
 | registry.domain | string | `"gsoci.azurecr.io"` |  |
 | image.name | string | `"giantswarm/teleport-exporter"` |  |
 | imagePullSecrets | list | `[]` |  |

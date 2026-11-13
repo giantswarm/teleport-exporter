@@ -20,6 +20,7 @@ import (
 	"context"
 	"math/rand"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -61,6 +62,9 @@ type Collector struct {
 	lastDbTypes            map[string]struct{} // key: "type"
 	lastClusterName        string
 	consecutiveErrors      int
+
+	// collected is set once the first collection has finished, successfully or not.
+	collected atomic.Bool
 }
 
 // New creates a new Collector.
@@ -130,7 +134,20 @@ func (c *Collector) calculateNextInterval() time.Duration {
 	return interval
 }
 
+// markCollected records that a collection has finished.
+func (c *Collector) markCollected() {
+	c.collected.Store(true)
+}
+
+// HasCollected reports whether at least one collection has finished,
+// regardless of whether it succeeded.
+func (c *Collector) HasCollected() bool {
+	return c.collected.Load()
+}
+
 func (c *Collector) collect(ctx context.Context) {
+	defer c.markCollected()
+
 	c.log.V(1).Info("collecting metrics from Teleport")
 
 	startTime := time.Now()
