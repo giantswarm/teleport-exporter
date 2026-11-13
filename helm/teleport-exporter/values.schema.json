@@ -297,6 +297,9 @@
                 "certificateTTL": {
                     "type": "string"
                 },
+                "credentialTTL": {
+                    "type": "string"
+                },
                 "enabled": {
                     "type": "boolean"
                 },
