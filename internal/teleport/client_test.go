@@ -17,6 +17,7 @@ limitations under the License.
 package teleport
 
 import (
+	"context"
 	"crypto/ed25519"
 	"crypto/rand"
 	"crypto/tls"
@@ -32,6 +33,7 @@ import (
 
 	"github.com/gravitational/teleport/api/client"
 	"github.com/gravitational/teleport/api/identityfile"
+	apissh "github.com/gravitational/teleport/api/ssh"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -103,7 +105,7 @@ func TestReloadIdentity_PicksUpRotatedIdentity(t *testing.T) {
 // certificate and returns that certificate's key ID, which is how a caller
 // tells two generations apart. The server rejects the key: the offer is all
 // this needs to observe.
-func offeredSSHCertKeyID(t *testing.T, cfg *ssh.ClientConfig) string {
+func offeredSSHCertKeyID(t *testing.T, cfg apissh.ClientConfig) string {
 	t.Helper()
 
 	_, hostKey, err := ed25519.GenerateKey(rand.Reader)
@@ -155,7 +157,7 @@ func offeredSSHCertKeyID(t *testing.T, cfg *ssh.ClientConfig) string {
 
 	// Authentication is expected to fail; only the certificate the client
 	// offered on the way there matters.
-	if conn, _, _, err := ssh.NewClientConn(clientConn, "proxy.example.com:3023", cfg); err == nil {
+	if conn, _, _, err := apissh.NewClientConn(context.Background(), clientConn, "proxy.example.com:3023", cfg); err == nil {
 		_ = conn.Close()
 	}
 	<-done
