@@ -1,0 +1,46 @@
+suite: tbot configmap credential TTL
+templates:
+  - templates/tbot-configmap.yaml
+set:
+  teleport.address: teleport.example.com:443
+tests:
+  - it: defaults to credential_ttl 12h (the role cap)
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^credential_ttl: 12h$'
+      - notMatchRegex:
+          path: data["tbot.yaml"]
+          pattern: certificate_ttl
+  - it: honours the legacy value
+    set:
+      tbot.certificateTTL: 24h
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^credential_ttl: 24h$'
+  - it: uses the new value
+    set:
+      tbot.credentialTTL: 8h
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^credential_ttl: 8h$'
+  - it: new value wins over legacy
+    set:
+      tbot.credentialTTL: 8h
+      tbot.certificateTTL: 24h
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^credential_ttl: 8h$'
+  - it: renders credential_ttl whatever the tbot version
+    set:
+      tbot.image.tag: 16.5.0
+    asserts:
+      - matchRegex:
+          path: data["tbot.yaml"]
+          pattern: '(?m)^credential_ttl: 12h$'
+      - notMatchRegex:
+          path: data["tbot.yaml"]
+          pattern: certificate_ttl

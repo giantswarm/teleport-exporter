@@ -43,3 +43,11 @@ Selector labels
 app.kubernetes.io/name: {{ include "name" . | quote }}
 app.kubernetes.io/instance: {{ .Release.Name | quote }}
 {{- end -}}
+
+{{/*
+tbot credential lifetime: tbot.credentialTTL, else the deprecated tbot.certificateTTL,
+else 12h, the max_session_ttl of the bot role.
+*/}}
+{{- define "teleport-exporter.tbotCredentialTTL" -}}
+{{- .Values.tbot.credentialTTL | default .Values.tbot.certificateTTL | default "12h" -}}
+{{- end -}}
