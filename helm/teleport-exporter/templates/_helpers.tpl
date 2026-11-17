@@ -45,6 +45,15 @@ app.kubernetes.io/instance: {{ .Release.Name | quote }}
 {{- end -}}
 
 {{/*
+Labels of the exporter pods only. The tbot pods carry the same selector labels
+plus app.kubernetes.io/component: tbot.
+*/}}
+{{- define "labels.exporterSelector" -}}
+{{ include "labels.selector" . }}
+app.kubernetes.io/component: exporter
+{{- end -}}
+
+{{/*
 tbot credential lifetime: tbot.credentialTTL, else the deprecated tbot.certificateTTL,
 else 12h, the max_session_ttl of the bot role.
 */}}

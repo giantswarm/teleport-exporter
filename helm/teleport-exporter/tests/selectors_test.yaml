@@ -1,0 +1,42 @@
+suite: Service reaches the exporter pods only
+templates:
+  - templates/service.yaml
+  - templates/deployment.yaml
+  - templates/tbot-deployment.yaml
+  # tbot-deployment.yaml includes it for its checksum annotation.
+  - templates/tbot-configmap.yaml
+set:
+  teleport.address: teleport.example.com:443
+tests:
+  - it: Service selects the exporter component
+    template: templates/service.yaml
+    asserts:
+      - equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/name: teleport-exporter
+            app.kubernetes.io/instance: RELEASE-NAME
+            app.kubernetes.io/component: exporter
+  - it: exporter pods carry the exporter component
+    template: templates/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels["app.kubernetes.io/component"]
+          value: exporter
+      - equal:
+          path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].podAffinityTerm.labelSelector.matchLabels["app.kubernetes.io/component"]
+          value: exporter
+  - it: keeps the exporter Deployment selector unchanged (immutable field)
+    template: templates/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.selector.matchLabels
+          value:
+            app.kubernetes.io/name: teleport-exporter
+            app.kubernetes.io/instance: RELEASE-NAME
+  - it: tbot pods do not carry the exporter component
+    template: templates/tbot-deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels["app.kubernetes.io/component"]
+          value: tbot
