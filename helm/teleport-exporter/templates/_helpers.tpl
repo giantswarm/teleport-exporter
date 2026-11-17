@@ -46,9 +46,7 @@ app.kubernetes.io/instance: {{ .Release.Name | quote }}
 
 {{/*
 Labels of the exporter pods only. The tbot pods carry the same selector labels
-plus app.kubernetes.io/component: tbot, so anything that must reach the exporter
-alone (the Service, its anti-affinity) adds this component label. The
-Deployment's own spec.selector is immutable and keeps only labels.selector.
+plus app.kubernetes.io/component: tbot.
 */}}
 {{- define "labels.exporterSelector" -}}
 {{ include "labels.selector" . }}
