@@ -7,6 +7,8 @@ metadata:
   labels:
     {{- include "labels.common" . | nindent 4 }}
 spec:
+  # Selects the exporter and its tbot pods on purpose: both need the same DNS and
+  # Teleport egress.
   podSelector:
     matchLabels:
       {{- include "labels.selector" . | nindent 6 }}
