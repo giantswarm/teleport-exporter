@@ -571,7 +571,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max without (instance, pod) (teleport_exporter_kubernetes_cluster_info{cluster_name=~\"$cluster\"})\nunless on (cluster_name, kube_cluster_name)\nlast_over_time(teleport_exporter_kubernetes_cluster_info{cluster_name=~\"$cluster\"}[1m] offset $lookback_period)",
+          "expr": "max without (instance, pod) (teleport_exporter_kubernetes_cluster_info{cluster_name=~\"$cluster\"})\nunless on (cluster_name, kube_cluster_name)\nlast_over_time(teleport_exporter_kubernetes_cluster_info{cluster_name=~\"$cluster\"}[5m] offset $lookback_period)",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
