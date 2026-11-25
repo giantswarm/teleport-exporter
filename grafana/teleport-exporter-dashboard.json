@@ -21,7 +21,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "13.1.0-25668120414"
+      "version": "13.4.0-43360213011"
     },
     {
       "type": "panel",
@@ -74,7 +74,7 @@
           "uid": "${datasource}"
         },
         "enable": true,
-        "expr": "changes(max without (instance, pod) (teleport_exporter_up)[5m:]) > 0",
+        "expr": "changes(max without (instance, pod) (teleport_exporter_up{cluster_id=\"$cluster_id\"})[5m:]) > 0",
         "hide": false,
         "iconColor": "red",
         "name": "Connection State Changes",
@@ -181,7 +181,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "13.1.0-25668120414",
+      "pluginVersion": "13.4.0-43360213011",
       "targets": [
         {
           "datasource": {
@@ -189,7 +189,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max without (instance, pod) (teleport_exporter_up)",
+          "expr": "max without (instance, pod) (teleport_exporter_up{cluster_id=\"$cluster_id\"})",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -253,7 +253,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "13.1.0-25668120414",
+      "pluginVersion": "13.4.0-43360213011",
       "targets": [
         {
           "datasource": {
@@ -261,7 +261,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max without (instance, pod) (teleport_exporter_collect_duration_seconds{cluster_name=~\"$cluster\"})",
+          "expr": "max without (instance, pod) (teleport_exporter_collect_duration_seconds{cluster_id=\"$cluster_id\"})",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -325,7 +325,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "13.1.0-25668120414",
+      "pluginVersion": "13.4.0-43360213011",
       "targets": [
         {
           "datasource": {
@@ -333,7 +333,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "time() - max without (instance, pod) (teleport_exporter_last_successful_collect_timestamp_seconds{cluster_name=~\"$cluster\"})",
+          "expr": "time() - max without (instance, pod) (teleport_exporter_last_successful_collect_timestamp_seconds{cluster_id=\"$cluster_id\"})",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -444,7 +444,7 @@
           "multiLane": false
         }
       },
-      "pluginVersion": "13.1.0-25668120414",
+      "pluginVersion": "13.4.0-43360213011",
       "targets": [
         {
           "datasource": {
@@ -452,7 +452,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max without (instance, pod) (teleport_exporter_up)",
+          "expr": "max without (instance, pod) (teleport_exporter_up{cluster_id=\"$cluster_id\"})",
           "legendFormat": "Connection Status",
           "range": true,
           "refId": "A"
@@ -561,9 +561,11 @@
       "options": {
         "cellHeight": "sm",
         "enablePagination": false,
-        "showHeader": true
+        "showHeader": true,
+        "showRowNumbers": false,
+        "zebraStriping": false
       },
-      "pluginVersion": "13.1.0-25668120414",
+      "pluginVersion": "13.4.0-43360213011",
       "targets": [
         {
           "datasource": {
@@ -571,7 +573,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max without (instance, pod) (teleport_exporter_kubernetes_cluster_info{cluster_name=~\"$cluster\"})\nunless on (cluster_name, kube_cluster_name)\nlast_over_time(teleport_exporter_kubernetes_cluster_info{cluster_name=~\"$cluster\"}[5m] offset $lookback_period)",
+          "expr": "max without (instance, pod) (teleport_exporter_kubernetes_cluster_info{cluster_id=\"$cluster_id\"})\nunless on (cluster_id, kube_cluster_name)\nlast_over_time(teleport_exporter_kubernetes_cluster_info{cluster_id=\"$cluster_id\"}[5m] offset $lookback_period)",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -696,9 +698,11 @@
       "options": {
         "cellHeight": "sm",
         "enablePagination": false,
-        "showHeader": true
+        "showHeader": true,
+        "showRowNumbers": false,
+        "zebraStriping": false
       },
-      "pluginVersion": "13.1.0-25668120414",
+      "pluginVersion": "13.4.0-43360213011",
       "targets": [
         {
           "datasource": {
@@ -706,7 +710,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "max without (instance, pod) (last_over_time(teleport_exporter_kubernetes_cluster_info{cluster_name=~\"$cluster\"}[$lookback_period] offset 1m))\nunless on (cluster_name, kube_cluster_name)\nteleport_exporter_kubernetes_cluster_info{cluster_name=~\"$cluster\"}",
+          "expr": "max without (instance, pod) (last_over_time(teleport_exporter_kubernetes_cluster_info{cluster_id=\"$cluster_id\"}[$lookback_period] offset 1m))\nunless on (cluster_id, kube_cluster_name)\nteleport_exporter_kubernetes_cluster_info{cluster_id=\"$cluster_id\"}",
           "format": "table",
           "instant": true,
           "legendFormat": "__auto",
@@ -803,7 +807,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "13.1.0-25668120414",
+      "pluginVersion": "13.4.0-43360213011",
       "targets": [
         {
           "datasource": {
@@ -811,7 +815,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max without (instance, pod) (teleport_exporter_nodes_total{cluster_name=~\"$cluster\"})) or vector(0)",
+          "expr": "sum (max without (instance, pod) (teleport_exporter_nodes_total{cluster_id=\"$cluster_id\"})) or vector(0)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -868,7 +872,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "13.1.0-25668120414",
+      "pluginVersion": "13.4.0-43360213011",
       "targets": [
         {
           "datasource": {
@@ -876,7 +880,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max without (instance, pod) (teleport_exporter_kubernetes_clusters_total{cluster_name=~\"$cluster\"})) or vector(0)",
+          "expr": "sum (max without (instance, pod) (teleport_exporter_kubernetes_clusters_total{cluster_id=\"$cluster_id\"})) or vector(0)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -932,7 +936,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "13.1.0-25668120414",
+      "pluginVersion": "13.4.0-43360213011",
       "targets": [
         {
           "datasource": {
@@ -940,7 +944,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max without (instance, pod) (teleport_exporter_kubernetes_management_clusters_total{cluster_name=~\"$cluster\"})) or vector(0)",
+          "expr": "sum (max without (instance, pod) (teleport_exporter_kubernetes_management_clusters_total{cluster_id=\"$cluster_id\"})) or vector(0)",
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
@@ -997,7 +1001,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "13.1.0-25668120414",
+      "pluginVersion": "13.4.0-43360213011",
       "targets": [
         {
           "datasource": {
@@ -1005,7 +1009,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max without (instance, pod) (teleport_exporter_kubernetes_workload_clusters_total{cluster_name=~\"$cluster\"})) or vector(0)",
+          "expr": "sum (max without (instance, pod) (teleport_exporter_kubernetes_workload_clusters_total{cluster_id=\"$cluster_id\"})) or vector(0)",
           "instant": true,
           "legendFormat": "__auto",
           "range": false,
@@ -1062,7 +1066,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "13.1.0-25668120414",
+      "pluginVersion": "13.4.0-43360213011",
       "targets": [
         {
           "datasource": {
@@ -1070,7 +1074,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max without (instance, pod) (teleport_exporter_databases_total{cluster_name=~\"$cluster\"})) or vector(0)",
+          "expr": "sum (max without (instance, pod) (teleport_exporter_databases_total{cluster_id=\"$cluster_id\"})) or vector(0)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -1126,7 +1130,7 @@
         "textMode": "auto",
         "wideLayout": true
       },
-      "pluginVersion": "13.1.0-25668120414",
+      "pluginVersion": "13.4.0-43360213011",
       "targets": [
         {
           "datasource": {
@@ -1134,7 +1138,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max without (instance, pod) (teleport_exporter_apps_total{cluster_name=~\"$cluster\"})) or vector(0)",
+          "expr": "sum (max without (instance, pod) (teleport_exporter_apps_total{cluster_id=\"$cluster_id\"})) or vector(0)",
           "legendFormat": "__auto",
           "range": true,
           "refId": "A"
@@ -1302,7 +1306,7 @@
           "multiLane": false
         }
       },
-      "pluginVersion": "13.1.0-25668120414",
+      "pluginVersion": "13.4.0-43360213011",
       "targets": [
         {
           "datasource": {
@@ -1310,7 +1314,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max without (instance, pod) (teleport_exporter_nodes_total{cluster_name=~\"$cluster\"}))",
+          "expr": "sum (max without (instance, pod) (teleport_exporter_nodes_total{cluster_id=\"$cluster_id\"}))",
           "legendFormat": "SSH Nodes",
           "range": true,
           "refId": "A"
@@ -1321,7 +1325,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max without (instance, pod) (teleport_exporter_kubernetes_clusters_total{cluster_name=~\"$cluster\"}))",
+          "expr": "sum (max without (instance, pod) (teleport_exporter_kubernetes_clusters_total{cluster_id=\"$cluster_id\"}))",
           "legendFormat": "K8s Clusters",
           "range": true,
           "refId": "B"
@@ -1332,7 +1336,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max without (instance, pod) (teleport_exporter_databases_total{cluster_name=~\"$cluster\"}))",
+          "expr": "sum (max without (instance, pod) (teleport_exporter_databases_total{cluster_id=\"$cluster_id\"}))",
           "legendFormat": "Databases",
           "range": true,
           "refId": "C"
@@ -1343,7 +1347,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max without (instance, pod) (teleport_exporter_apps_total{cluster_name=~\"$cluster\"}))",
+          "expr": "sum (max without (instance, pod) (teleport_exporter_apps_total{cluster_id=\"$cluster_id\"}))",
           "legendFormat": "Applications",
           "range": true,
           "refId": "D"
@@ -1469,7 +1473,7 @@
           "multiLane": false
         }
       },
-      "pluginVersion": "13.1.0-25668120414",
+      "pluginVersion": "13.4.0-43360213011",
       "targets": [
         {
           "datasource": {
@@ -1477,7 +1481,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max without (instance, pod) (teleport_exporter_kubernetes_management_clusters_total{cluster_name=~\"$cluster\"}))",
+          "expr": "sum (max without (instance, pod) (teleport_exporter_kubernetes_management_clusters_total{cluster_id=\"$cluster_id\"}))",
           "legendFormat": "Management",
           "range": true,
           "refId": "A"
@@ -1488,7 +1492,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max without (instance, pod) (teleport_exporter_kubernetes_workload_clusters_total{cluster_name=~\"$cluster\"}))",
+          "expr": "sum (max without (instance, pod) (teleport_exporter_kubernetes_workload_clusters_total{cluster_id=\"$cluster_id\"}))",
           "legendFormat": "Workload",
           "range": true,
           "refId": "B"
@@ -1599,7 +1603,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "13.1.0-25668120414",
+      "pluginVersion": "13.4.0-43360213011",
       "targets": [
         {
           "datasource": {
@@ -1607,7 +1611,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max without (instance, pod) (teleport_exporter_kubernetes_management_clusters_total{cluster_name=~\"$cluster\"})) or vector(0)",
+          "expr": "sum (max without (instance, pod) (teleport_exporter_kubernetes_management_clusters_total{cluster_id=\"$cluster_id\"})) or vector(0)",
           "instant": true,
           "legendFormat": "Management",
           "range": false,
@@ -1619,7 +1623,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max without (instance, pod) (teleport_exporter_kubernetes_workload_clusters_total{cluster_name=~\"$cluster\"})) or vector(0)",
+          "expr": "sum (max without (instance, pod) (teleport_exporter_kubernetes_workload_clusters_total{cluster_id=\"$cluster_id\"})) or vector(0)",
           "instant": true,
           "legendFormat": "Workload",
           "range": false,
@@ -1719,7 +1723,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "13.1.0-25668120414",
+      "pluginVersion": "13.4.0-43360213011",
       "targets": [
         {
           "datasource": {
@@ -1727,7 +1731,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max without (instance, pod) (teleport_exporter_nodes_identified_total{cluster_name=~\"$cluster\"})) or vector(0)",
+          "expr": "sum (max without (instance, pod) (teleport_exporter_nodes_identified_total{cluster_id=\"$cluster_id\"})) or vector(0)",
           "instant": true,
           "legendFormat": "Identified",
           "range": false,
@@ -1739,7 +1743,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum (max without (instance, pod) (teleport_exporter_nodes_unidentified_total{cluster_name=~\"$cluster\"})) or vector(0)",
+          "expr": "sum (max without (instance, pod) (teleport_exporter_nodes_unidentified_total{cluster_id=\"$cluster_id\"})) or vector(0)",
           "instant": true,
           "legendFormat": "Unknown",
           "range": false,
@@ -1806,7 +1810,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "13.1.0-25668120414",
+      "pluginVersion": "13.4.0-43360213011",
       "targets": [
         {
           "datasource": {
@@ -1814,7 +1818,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (protocol) (max without (instance, pod) (teleport_exporter_databases_by_protocol_total{cluster_name=~\"$cluster\"}))",
+          "expr": "sum by (protocol) (max without (instance, pod) (teleport_exporter_databases_by_protocol_total{cluster_id=\"$cluster_id\"}))",
           "instant": true,
           "legendFormat": "{{protocol}}",
           "range": false,
@@ -1881,7 +1885,7 @@
           "sort": "none"
         }
       },
-      "pluginVersion": "13.1.0-25668120414",
+      "pluginVersion": "13.4.0-43360213011",
       "targets": [
         {
           "datasource": {
@@ -1889,7 +1893,7 @@
             "uid": "${datasource}"
           },
           "editorMode": "code",
-          "expr": "sum by (type) (max without (instance, pod) (teleport_exporter_databases_by_type_total{cluster_name=~\"$cluster\"}))",
+          "expr": "sum by (type) (max without (instance, pod) (teleport_exporter_databases_by_type_total{cluster_id=\"$cluster_id\"}))",
           "instant": true,
           "legendFormat": "{{type}}",
           "range": false,
@@ -1990,7 +1994,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "topk(20, max without (instance, pod) (teleport_exporter_nodes_by_kubernetes_cluster{cluster_name=~\"$cluster\"}))",
+              "expr": "topk(20, max without (instance, pod) (teleport_exporter_nodes_by_kubernetes_cluster{cluster_id=\"$cluster_id\"}))",
               "instant": true,
               "legendFormat": "{{kube_cluster}}",
               "range": false,
@@ -2092,7 +2096,7 @@
                 "uid": "${datasource}"
               },
               "editorMode": "code",
-              "expr": "max without (instance, pod) (teleport_exporter_kubernetes_cluster_info{cluster_name=~\"$cluster\"})",
+              "expr": "max without (instance, pod) (teleport_exporter_kubernetes_cluster_info{cluster_id=\"$cluster_id\"})",
               "format": "table",
               "instant": true,
               "legendFormat": "__auto",
@@ -2156,31 +2160,30 @@
         "skipUrlSync": false
       },
       {
-        "allValue": ".*",
         "current": {
           "selected": true,
-          "text": "teleport.giantswarm.io",
-          "value": "teleport.giantswarm.io"
+          "text": "prod",
+          "value": "prod"
         },
         "datasource": {
           "type": "prometheus",
           "uid": "${datasource}"
         },
-        "definition": "label_values(teleport_exporter_last_successful_collect_timestamp_seconds, cluster_name)",
-        "includeAll": true,
-        "label": "Cluster",
-        "name": "cluster",
+        "definition": "label_values(teleport_exporter_up{cluster_type=\"teleport\"}, cluster_id)",
+        "description": "Teleport instance (cluster_id external label) every panel shows",
+        "includeAll": false,
+        "label": "Teleport",
+        "name": "cluster_id",
         "options": [],
         "query": {
-          "query": "label_values(teleport_exporter_last_successful_collect_timestamp_seconds, cluster_name)",
+          "query": "label_values(teleport_exporter_up{cluster_type=\"teleport\"}, cluster_id)",
           "refId": "StandardVariableQuery"
         },
         "refresh": 2,
         "regex": "",
-        "regexApplyTo": "value",
         "sort": 1,
         "type": "query",
-        "allowCustomValue": true,
+        "allowCustomValue": false,
         "hide": 0,
         "multi": false,
         "skipUrlSync": false
@@ -2226,7 +2229,7 @@
   "timezone": "utc",
   "title": "Teleport Exporter",
   "uid": "teleport-exporter",
-  "version": 88,
+  "version": 90,
   "id": null,
   "liveNow": false
 }
